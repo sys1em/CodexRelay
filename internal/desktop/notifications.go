@@ -67,12 +67,14 @@ func newNotificationWindowManager(wailsApp *application.App, mainWindow *applica
 			BackgroundColour: application.NewRGBA(255, 255, 255, 0),
 		})
 		manager.windows[kind] = window
+		// 提醒窗口自身的运行时就绪才是提醒系统可刷新的可靠信号；主窗口可能按开机隐藏策略一直不显示。
+		window.RegisterHook(events.Common.WindowRuntimeReady, func(_ *application.WindowEvent) {
+			manager.markStarted()
+		})
 	}
 	mainWindow.RegisterHook(events.Common.WindowRuntimeReady, func(_ *application.WindowEvent) {
-		manager.mu.Lock()
-		manager.started = true
-		manager.mu.Unlock()
-		manager.refresh()
+		// 主窗口就绪仍作为兜底刷新入口，但不再是提醒系统唯一的启动条件。
+		manager.markStarted()
 	})
 	for _, eventType := range []events.WindowEventType{events.Common.WindowShow, events.Common.WindowRestore, events.Common.WindowUnMinimise} {
 		mainWindow.RegisterHook(eventType, func(_ *application.WindowEvent) { manager.hideAll() })
@@ -81,6 +83,15 @@ func newNotificationWindowManager(wailsApp *application.App, mainWindow *applica
 		mainWindow.RegisterHook(eventType, func(_ *application.WindowEvent) { manager.refresh() })
 	}
 	return manager
+}
+
+// markStarted 标记提醒窗口运行时已经可用，并重放一次当前状态。
+// 启动同步可能早于任一窗口就绪完成，因此就绪事件必须主动重放待显示的提醒。
+func (m *notificationWindowManager) markStarted() {
+	m.mu.Lock()
+	m.started = true
+	m.mu.Unlock()
+	m.refresh()
 }
 
 func (m *notificationWindowManager) refresh() {
