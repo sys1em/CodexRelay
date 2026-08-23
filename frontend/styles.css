@@ -389,7 +389,7 @@ input[readonly]:focus { border-color: #d8dbe0; box-shadow: none; }
   scrollbar-gutter: stable;
   padding: 0 0 30px;
 }
-.settings-panel { width: min(780px, 100%); min-width: 0; padding: 0; }
+.settings-panel { width: 100%; min-width: 0; padding: 0; }
 .relay-data-directory-row { display: grid; gap: 10px; margin-bottom: 18px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
 .relay-data-directory-copy { display: grid; gap: 5px; }
 .relay-data-directory-copy strong { color: #27313b; font-size: 13px; font-weight: 680; }
