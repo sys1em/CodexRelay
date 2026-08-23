@@ -180,7 +180,15 @@ func TestImageCategoryRecordsRequestWithoutTokenUsage(t *testing.T) {
 	}
 	_, _ = io.Copy(io.Discard, response.Body)
 	response.Body.Close()
-	records := runtime.RecentRecords()
+	var records []usage.RequestRecord
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		records = runtime.RecentRecords()
+		if len(records) == 1 {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 	if len(records) != 1 || records[0].UsageStatus != usage.StatusUnreported || records[0].TotalTokens != 0 || records[0].InputTokens != 0 || records[0].OutputTokens != 0 {
 		t.Fatalf("records = %+v", records)
 	}
