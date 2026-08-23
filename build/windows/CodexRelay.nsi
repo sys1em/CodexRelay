@@ -6,6 +6,9 @@ Unicode true
 !ifndef APP_VERSION
   !define APP_VERSION "0.0.0"
 !endif
+!ifndef APP_FILE_VERSION
+  !define APP_FILE_VERSION "0.0.0.0"
+!endif
 !ifndef APP_ARCH
   !define APP_ARCH "amd64"
 !endif
@@ -35,6 +38,8 @@ VIAddVersionKey "ProductName" "${APP_NAME}"
 VIAddVersionKey "ProductVersion" "${APP_VERSION}"
 VIAddVersionKey "FileDescription" "Codex API relay desktop application"
 VIAddVersionKey "LegalCopyright" "Copyright (c) xxloocee"
+VIProductVersion "${APP_FILE_VERSION}"
+VIFileVersion "${APP_FILE_VERSION}"
 
 Section "Install"
   SetOutPath "$INSTDIR"

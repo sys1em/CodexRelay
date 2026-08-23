@@ -28,6 +28,7 @@ if ($normalizedVersion.StartsWith("v")) {
 if ($normalizedVersion -notmatch '^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$') {
     throw "版本号不是有效的 SemVer：$Version"
 }
+$fileVersion = (($normalizedVersion -split '[+-]', 2)[0]) + ".0"
 
 $versionedExecutable = Join-Path $outputDirectory "CodexRelay-$normalizedVersion-$Architecture.exe"
 $installer = Join-Path $outputDirectory "CodexRelay-$normalizedVersion-$Architecture-setup.exe"
@@ -68,7 +69,7 @@ try {
     go build -trimpath -tags production -ldflags "-H windowsgui -s -w -X codexrelay/internal/desktop.applicationVersion=$normalizedVersion" -o $versionedExecutable ./cmd
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-    & makensis "/DAPP_VERSION=$normalizedVersion" "/DAPP_ARCH=$Architecture" "/DAPP_EXE=$versionedExecutable" "/DAPP_OUTPUT=$installer" "/DAPP_ICON=$installerIcon" "/DAPP_WEBVIEW2=$webviewBootstrapper" $installerScript
+    & makensis "/DAPP_VERSION=$normalizedVersion" "/DAPP_FILE_VERSION=$fileVersion" "/DAPP_ARCH=$Architecture" "/DAPP_EXE=$versionedExecutable" "/DAPP_OUTPUT=$installer" "/DAPP_ICON=$installerIcon" "/DAPP_WEBVIEW2=$webviewBootstrapper" $installerScript
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 } finally {
     Pop-Location
