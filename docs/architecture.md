@@ -1,0 +1,92 @@
+# CodexRelay 架构
+
+## 目录与职责
+
+```text
+CodexRelay/
+|- cmd/
+|  |- main.go                       # 参数解析和不可恢复启动错误
+|  `- resource_windows_amd64.syso   # 构建生成的 Windows 资源
+|- internal/
+|  |- desktop/                      # Wails 应用、绑定服务、窗口与托盘
+|  |  `- clientconfig/               # 外部客户端配置适配器、格式辅助与备份写入
+|  |- config/                       # 当前配置模型、校验与 config.json
+|  |- relay/                        # 运行时快照、认证和反向代理
+|  |- network/                      # 出站 Transport 与系统代理只读检测
+|  |- usage/                        # usage 旁路观察、聚合与 usage.json
+|  |- storage/                      # 原子 JSON 读写和平台文件替换
+|  `- platform/                     # 开机启动与致命错误平台实现
+|- frontend/                        # 嵌入 Wails 的前端与生成 bindings
+|  `- vendor/                       # 随程序嵌入的固定第三方前端资源
+|- build/windows/                   # ico、manifest 构建输入
+|- docs/                            # 架构和长期设计事实
+|- test/                            # 独立的脱敏界面与集成冒烟测试
+|- dist/                            # 本机构建产物与便携数据
+|- embed.go                         # 映射 frontend 与唯一 logo.png
+|- logo.png                         # 品牌图标唯一源文件
+`- build.ps1                        # 测试、bindings、资源和 EXE 构建
+```
+
+包依赖保持单向：
+
+```text
+cmd -> desktop
+desktop -> config, relay, usage, platform, desktop/clientconfig
+desktop/clientconfig -> config, storage
+relay -> config, network, usage
+config -> network, storage
+usage -> storage
+```
+
+`network`、`storage` 和 `platform` 不依赖业务包。前端只通过 `frontend/api.js` 间接引用 Wails 自动生成的 bindings，生成目录不手工维护。根包只负责嵌入静态资源，`logo.png` 不复制到其他源码目录。
+
+## 请求链路
+
+1. `cmd` 解析 `--autostart` 和 `-proxy-port`，调用 `desktop.Run`。
+2. `desktop` 只从用户数据目录加载 `config.json` 和 `usage.json`，装配 Wails、托盘和本地 HTTP 服务；程序运行目录不参与配置定位。
+3. `relay.Runtime` 将当前配置编译成不可变快照；切换类别下的代理 API 后，新请求立即读取新快照，已开始的请求继续使用原目标。
+4. `relay.Proxy` 校验本地访问令牌，保留方法、路径、查询和请求体，只替换上游目标、`Authorization` 与明确配置的额外请求头。
+5. `network` 根据跟随系统、直接连接或指定代理创建独立 Transport，不修改 Windows 系统代理、DNS、路由或 VPN。
+6. `usage.Observer` 只观察流经客户端的响应字节副本。记录失败或未发现真实 usage 时写入 `unreported`，不改变代理响应。
+
+## 持久化契约
+
+`config.Store` 和 `usage.Store` 共用 `storage.WriteJSONAtomic`：在目标目录创建临时文件，完整写入并同步，再用平台实现替换目标。读取或校验失败不会覆盖原文件。默认数据目录是当前用户目录下的 `.CodexRelay`（Windows 默认形如 `C:\Users\<用户>\.CodexRelay`），不再读取程序运行目录的配置文件。用户切换目录时，桌面服务在运行时锁内把两个 JSON 快照写入目标目录，拒绝覆盖目标同名文件，提交后切换两个 Store 并清理旧目录中的这两个文件。
+
+自定义目录通过默认 `.CodexRelay\.active-directory.json` 路径指针定位，因此重启时无需扫描运行目录或猜测历史位置。指针损坏会直接报告错误；切回默认目录时删除指针。路径指针不包含 API 密钥或用量正文。
+
+首次启动且任一便携数据文件缺失时，桌面服务使用延迟持久化存储：配置、公告同步和用量记录只保留在内存，不会因启动、定时同步或关闭窗口前的运行产生 `config.json`、`usage.json`。用户点击“暂时跳过”或绑定令牌成功后，当前内存快照才写入两个文件，并恢复后续正常保存；写入失败会保留引导状态，避免下次启动误认为初始化已完成。
+
+`config.json` 当前不包含版本字段；未知字段会被忽略，程序只校验当前实际使用的配置字段，不迁移、不修补旧字段，也不读取 `%APPDATA%` 等历史位置。API 密钥明文存于 `Profile.apiKey`，这是便携产品的明确选择；`usage.json`、日志和错误信息不得包含密钥。
+
+代理 API 配置同时记录 `source`（`doge` 或 `custom`）和 `category`（`codex`、`claude`、`gemini`、`grok`、`opencode`、`openclaw`、`hermes`、`image`、`other`）。每个 profile 还可以保存用户从上游获取或手动维护的 `models` 与 `defaultModel`，用于编辑页管理和外部客户端写入；模型目录不参与代理转发格式转换。`activeProfiles` 以类别为键保存启用项，每个类别最多一个。
+
+`config.preferences` 保存桌面展示偏好：`visibleCategories` 是主页允许展示的类别列表，隐藏类别不会删除配置、令牌或停止代理；新配置的 `defaultSource` 和 `defaultCategory` 默认为 `doge`/`codex`，两者只决定主界面首次加载及“默认视图”恢复时的筛选，空字符串表示全部；`restoreViewMode` 为 `current` 或 `default`，分别表示恢复窗口保留当前筛选或应用上述默认筛选。主页至少保留一个可见类别，默认类别必须属于可见类别。托盘、第二实例和任务栏恢复只读取本地快照并更新前端筛选，不触发上游同步。
+
+`config.doge` 保存二狗子 New API 的绑定状态、当前用户分组、分页令牌目录、令牌顺序、同步间隔和最近同步状态。自动同步默认每 3 分钟，可选 1、3、5、10、15、30 分钟或 1 小时。`tokenOrder` 使用令牌接口返回的远端令牌 ID 作为稳定身份，不依赖可能变化的 API 密钥、名称或分组；同步会保留仍存在的旧顺序并追加新令牌。分组接口返回的对象键作为令牌 `group` 匹配键，`display_name` 保存为 `groupDisplayName`，`ratio` 保存为 `groupRatio`，主页和设置只展示展示名与倍率。每个令牌的 `category` 保存本地存放类别，`note` 保存首次同步生成的 `sk-掩码 · 额度摘要`；用户没有自定义备注时，同步会更新旧的自动备注，手工备注则保留。首次绑定或后续发现新令牌时，桌面状态标记为待分配，前端弹窗批量保存用户选择。远端 `group` 参与当前权限目录判断，但不作为同类别候选的额外分组筛选条件。主窗口、托盘和令牌切换提示共用“当前类别、状态正常、分组有权限且本地有完整密钥”的可用集合。管理访问令牌按产品的便携明文配置策略保存，但不会通过 `DesktopState` 返回；主页只显示令牌掩码。首次绑定和用户点击手动刷新时，桌面服务会为当前所有令牌调用密钥接口并把完整密钥保存到本地；启动恢复和设置中的定时同步只刷新用户、分组、令牌元数据、套餐与额度，已有令牌沿用本地密钥，只有新令牌或本地缺失密钥的令牌才调用密钥接口。编辑、启用和切换只读取本地完整密钥，缺失时提示先手动同步，不隐式访问上游；完整密钥统一保存为 `sk-` 前缀。已写入本地的二狗子密钥在编辑页只读，名称、地址、备注、类别和请求头仍可修改。同步失败只更新状态，不阻断本地代理转发。
+
+二狗子管理请求使用 `/api/user/self`、`/api/user/self/groups`、分页 `/api/token/`；绑定和手动同步通过 `POST /api/token/{id}/key` 获取完整密钥，定时同步仅为新增或本地缺失密钥的令牌调用该接口。实际代理连通性仍通过令牌自身访问 `/v1/models` 探测。代理路由覆盖所有已知类别；生图和其他类别只记录请求次数，不旁路解析 Token 用量。
+
+同步性能约束：账户、分组、令牌目录、套餐、兑换配置以及公告基础接口并行获取；基础阶段完成后，令牌完整密钥最多使用 8 个并发请求。自动同步沿用本地完整密钥，只为新增或缺失密钥的令牌进入密钥阶段。
+
+外部客户端配置由 `config.clientConfigs` 保存每个类别的配置目录和主配置文件名。启动时只检查各适配器定义的默认位置，不遍历磁盘；发现目录后写入当前数据目录，高级设置可以通过原生目录选择器覆盖目录，选择外部路径不会迁移外部软件文件。每个支持自动配置的类别还保存 `skipConfigReplacement`；勾选后主页启用或切换直接执行本地切换，不读取或改写外部配置。未勾选时，CodexRelay 只读检查本地配置是否同时包含当前类别的本地请求地址和本地访问令牌，已配置则直接切换，未配置才显示简化提示。选择“跳过”只执行本地切换，选择“配置”先为每个将要改写的文件创建 `<原文件>.<时间戳>.CodexRelay` 备份，再用原子写入更新已确认的适配字段，最后执行本地切换；配置失败不会改变启用映射。外部写入只使用 profile 已保存的模型目录，不会在切换时隐式请求上游。Codex 的地址写入 `config.toml`，密钥写入 `auth.json`，状态检查会同时读取两者。当前适配器覆盖 Claude、Gemini、Codex、Grok、OpenCode、OpenClaw 和 Hermes；OpenClaw 读取标准 JSON 和参考项目使用的 JSON5，写回为合法 JSON；生图、其他类别保留手动配置。模型获取路径、字段和客户端模型结构见 `docs/model-management.md`。
+
+公告同步在账户同步的基础阶段中调用公开的 `/api/status` 和 `/api/notice`，两个接口并行请求；未绑定账户时仍可独立同步公告。公告内容、当前公告、未读公告 ID 和提醒确认 key 保存到 `config.doge.notifications`。余额、套餐、公告是三个独立提醒类别；同一类别的多条内容合并在一个右下角窗口，不同类别可以同时显示。提醒窗口只在主窗口最小化或隐藏到托盘时显示，点击“我知道了”确认当前类别后关闭，主窗口恢复时全部隐藏。所有右下角提醒窗口统一固定为令牌切换窗口的 `430x300` 尺寸；公告正文进入界面前由随程序嵌入的 `marked 18.0.10` Markdown 解析器转换，再经过允许标签过滤，正文超出窗口时在正文区域内部纵向滚动，不截断内容。提醒状态不影响代理请求。
+
+代理转发完成后只旁路观察上游 HTTP 状态和传输错误，不记录请求正文或认证材料。单个活动二狗子 Profile 的 `401/403` 连续达到 5 次时生成令牌切换提示；`5xx` 或连接错误在 3 分钟窗口内累计达到 5 次时生成上游异常提示。后台目录同步另行比较当前活动令牌与最新 `/api/token/` 目录：令牌消失、`status` 不再为 1 或所属分组不再可用时，也生成同一令牌切换提示。统计只存在运行时内存，切换成功会清零原 Profile 的统计，用户取消后同一失败状态抑制提示 5 分钟。候选令牌与当前令牌属于相同本地类别，并从主窗口共用的可用集合中筛选：状态可用、分组仍有权限且本地存在完整密钥；候选不再按远端 `group` 二次筛选，服务端在切换时重新校验这些条件。令牌切换提示作为独立右下角窗口，只在主窗口隐藏或最小化时显示。
+
+统计永久保留累计聚合、最近 90 天每日聚合和最近 300 条请求明细。明细不保存请求正文、响应正文或认证头。
+
+## 启动与窗口
+
+普通进程启动创建可见窗口。主页首次加载使用 `preferences.defaultSource` 与 `preferences.defaultCategory`；恢复策略为 `default` 时，托盘、第二实例和任务栏恢复会重新应用相同筛选，`current` 则保留当前筛选。上述恢复路径不申请二狗子同步。Codex 使用的本地地址为 `http://127.0.0.1:8765/codex`；其他类别分别使用对应的类别前缀。Windows Run 注册表值为：
+
+```text
+"<绝对路径>\CodexRelay-<版本>.exe" --autostart
+```
+
+窗口只有在同时满足 `--autostart` 和 `preferences.startHidden=true` 时初始隐藏。关闭到托盘后代理继续运行；第二实例、托盘单击或“打开”都会恢复、显示并聚焦已有窗口，但不会因此请求上游同步。首次启动绑定账户后立即执行一次目录元数据同步，之后仅由配置的定时任务执行；后台同步更新状态后，原生托盘刷新会发出 `relay-state-changed`，主界面监听该事件读取最新快照，避免隐藏窗口停止轮询后恢复时继续显示旧目录。
+
+## 构建边界
+
+`build.ps1` 固定构建 `windows/amd64`，从 `internal/desktop/service.go` 动态读取 `applicationVersion`，输出唯一的 `dist/CodexRelay-<版本>.exe`；脚本从根 `logo.png` 生成 `build/windows/app.ico` 与 `cmd/resource_windows_amd64.syso`，重新生成 `frontend/bindings`，运行 Go 测试、vet 和前端语法检查，最后构建 GUI 子系统 EXE。生成的 EXE 嵌入前端、bindings 和品牌资源，不依赖源码目录。

@@ -1,0 +1,300 @@
+<!doctype html>
+<!--
+  @Author        : 顾青离
+  @Url           : sucaijun.com
+  @Email         : Ricky@LiHai.La
+  @Project       : CodexRelay
+  @Description   : Codex API 中转热切换桌面工具
+  @File          : Wails 桌面界面结构
+  @Read me       : 感谢使用 CodexRelay，源码注释齐全，支持二次开发。
+  @Remind        : 二次开发请保留原版权信息，谢谢。
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CodexRelay</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="appShell">
+    <section id="profilesView" class="view">
+      <header class="app-toolbar">
+        <div class="brand">
+          <img class="brand-symbol" src="/logo.png" alt="">
+          <div><h1>CodexRelay</h1><span id="version" class="version"></span></div>
+        </div>
+        <div class="toolbar-actions">
+          <div id="dogeQuotaWrap" class="doge-quota-wrap">
+            <button id="dogeQuotaSummary" class="doge-quota-summary" type="button" aria-expanded="false" aria-controls="dogeQuotaPopover">
+              <span class="doge-quota-caption">二狗子余额</span><strong id="dogeQuotaTotal">$0.00</strong>
+            </button>
+            <div id="dogeQuotaPopover" class="doge-quota-popover hidden" role="dialog" aria-label="二狗子额度明细">
+              <div class="doge-quota-popover-head"><strong>额度明细</strong><span id="dogeQuotaStatus">未绑定</span></div>
+              <div class="doge-quota-overview"><span>总剩余</span><strong id="dogeQuotaPopoverTotal">$0.00</strong></div>
+              <div class="doge-quota-lines">
+                <div><span>钱包余额</span><strong id="dogeWalletQuota">$0.00</strong></div>
+                <div><span>套餐合计</span><strong id="dogeSubscriptionsQuota">$0.00</strong></div>
+              </div>
+              <div id="dogeSubscriptionRows" class="doge-subscription-rows"></div>
+            </div>
+          </div>
+          <button id="openDogeTopup" class="doge-topup-button" type="button"><span class="icon icon-plus" aria-hidden="true"></span><span>兑换额度</span></button>
+          <div id="announcementWrap" class="announcement-wrap">
+            <button id="openAnnouncements" class="announcement-button" type="button" title="系统公告" aria-label="系统公告" aria-expanded="false" aria-controls="announcementPanel">
+              <img src="/icons/status.svg" alt="">
+              <span id="announcementBadge" class="announcement-badge hidden">0</span>
+            </button>
+            <section id="announcementPanel" class="announcement-panel hidden" role="dialog" aria-label="系统公告">
+              <header class="announcement-panel-header"><div><strong>系统公告</strong><span>最新平台更新和通知</span></div><button id="closeAnnouncements" class="announcement-close" type="button" title="关闭" aria-label="关闭"><span class="icon icon-x" aria-hidden="true"></span></button></header>
+              <div class="announcement-tabs" role="tablist"><button type="button" class="active" data-announcement-tab="notice">通知</button><button type="button" data-announcement-tab="timeline">时间线</button></div>
+              <div id="announcementNoticePane" class="announcement-pane"></div>
+              <div id="announcementTimelinePane" class="announcement-pane hidden"></div>
+              <footer class="announcement-panel-footer"><span id="announcementSyncState"></span><button id="markAnnouncementsRead" class="text-button" type="button"><span data-button-label>全部已读</span></button></footer>
+            </section>
+          </div>
+          <button id="refreshDoge" class="tool-button" type="button" title="刷新二狗子 API" aria-label="刷新二狗子 API"><span class="icon icon-refresh" aria-hidden="true"></span></button>
+          <button id="openSettings" class="tool-button" type="button" title="设置" aria-label="设置"><span class="icon icon-settings" aria-hidden="true"></span></button>
+          <button id="addProfile" class="add-button" type="button" title="添加代理 API" aria-label="添加代理 API"><span class="icon icon-plus" aria-hidden="true"></span></button>
+        </div>
+      </header>
+      <main class="page-content list-page">
+        <div class="profile-toolbar">
+          <div class="profile-filters" aria-label="代理 API 筛选">
+            <div class="filter-row"><span class="filter-label">来源</span><div class="filter-options" data-filter-group="source" role="tablist" aria-label="来源筛选"><button class="filter-option active" type="button" data-filter-value="">全部</button><button class="filter-option" type="button" data-filter-value="doge">二狗子</button><button class="filter-option" type="button" data-filter-value="custom">自定义</button></div></div>
+            <div class="filter-row"><span class="filter-label">类别</span><div class="filter-options" data-filter-group="category" role="tablist" aria-label="类别筛选"><button class="filter-option active" type="button" data-filter-value="">全部</button><button class="filter-option" type="button" data-filter-value="codex">Codex</button><button class="filter-option" type="button" data-filter-value="claude">Claude</button><button class="filter-option" type="button" data-filter-value="gemini">Gemini</button><button class="filter-option" type="button" data-filter-value="grok">Grok</button><button class="filter-option" type="button" data-filter-value="opencode">OpenCode</button><button class="filter-option" type="button" data-filter-value="openclaw">OpenClaw</button><button class="filter-option" type="button" data-filter-value="hermes">Hermes</button><button class="filter-option" type="button" data-filter-value="image">生图</button><button class="filter-option" type="button" data-filter-value="other">其他</button></div></div>
+          </div>
+          <div class="active-summary" aria-label="已启用代理 API 数量"><span>已启用</span><strong id="activeCount">0/9</strong></div>
+        </div>
+        <div id="profileList" class="profile-list"></div>
+        <div id="emptyProfiles" class="empty-state hidden">
+          <span class="empty-symbol"><span class="icon icon-plus" aria-hidden="true"></span></span><h2 id="emptyProfilesTitle">还没有代理 API</h2>
+          <button id="emptyAdd" class="primary-button" type="button"><span class="icon icon-plus" aria-hidden="true"></span><span>添加代理 API</span></button>
+        </div>
+      </main>
+    </section>
+
+    <section id="editorView" class="view hidden">
+      <header class="subpage-toolbar">
+        <button id="editorBack" class="back-button" type="button" title="返回" aria-label="返回"><span class="icon icon-arrow-left" aria-hidden="true"></span></button>
+        <h1 id="editorTitle">新建代理 API</h1>
+        <span id="activeBadge" class="active-badge hidden">当前生效</span>
+      </header>
+      <form id="profileForm" class="editor-form">
+        <div class="form-body">
+          <div class="field-row">
+            <label class="field"><span>代理 API 名称</span><input id="profileName" autocomplete="off" maxlength="80" placeholder="例如：主线路" required></label>
+            <label class="field"><span>备注说明</span><input id="profileNote" autocomplete="off" maxlength="160" placeholder="例如：稳定线路、低延迟"></label>
+          </div>
+          <div class="field-row single-field">
+            <label class="field"><span>API 类别</span><select id="profileCategory"><option value="codex">Codex</option><option value="claude">Claude</option><option value="gemini">Gemini</option><option value="grok">Grok</option><option value="opencode">OpenCode</option><option value="openclaw">OpenClaw</option><option value="hermes">Hermes</option><option value="image">生图</option><option value="other">其他</option></select></label>
+          </div>
+          <label class="field"><span>API 地址</span><input id="baseUrl" type="url" autocomplete="off" placeholder="https://api.example.com/v1" required></label>
+          <label class="field">
+            <span>API 密钥</span>
+            <input id="apiKey" type="text" autocomplete="off" placeholder="sk-..." required aria-readonly="false">
+          </label>
+          <div class="preview-row">
+            <div>
+              <span>Responses 请求地址</span>
+              <code id="previewUrl">请求地址：-</code>
+              <code id="previewToken">密钥：-</code>
+            </div>
+            <button id="copyPreview" class="text-button" type="button"><span class="icon icon-copy" aria-hidden="true"></span><span>复制</span></button>
+          </div>
+          <details class="advanced-fields">
+            <summary>高级设置</summary>
+            <label class="field"><span>额外请求头（JSON）</span><textarea id="headers" rows="5" spellcheck="false" placeholder='{"X-Provider": "value"}'></textarea></label>
+            <section class="model-manager" aria-labelledby="modelManagerTitle">
+              <div class="model-manager-heading">
+                <div><strong id="modelManagerTitle">模型管理</strong><small>从上游获取模型，也可以手动修正模型名称和默认项。</small></div>
+                <div class="model-manager-actions"><button id="fetchModels" class="secondary-button compact-button" type="button"><span class="icon icon-refresh" aria-hidden="true"></span><span data-button-label>获取模型列表</span></button><button id="addModel" class="text-button compact-button" type="button"><span class="icon icon-plus" aria-hidden="true"></span><span>添加模型</span></button></div>
+              </div>
+              <div id="modelManagerStatus" class="model-manager-status"></div>
+              <div class="model-table-head"><span>模型 ID</span><span>显示名称</span><span>归属</span><span>上下文窗口</span><span>默认</span><span></span></div>
+              <div id="modelRows" class="model-rows"></div>
+              <div id="modelEmpty" class="model-empty">暂无模型，请先获取或手动添加。</div>
+            </section>
+          </details>
+        </div>
+        <footer class="form-footer">
+          <button id="deleteProfile" class="danger-button" type="button"><span class="icon icon-trash-2" aria-hidden="true"></span><span>删除</span></button>
+          <div class="footer-actions">
+            <button id="testProfile" class="secondary-button" type="button"><span class="icon icon-activity" aria-hidden="true"></span><span data-button-label>测试连接</span></button>
+            <button id="activateProfile" class="secondary-button" type="button"><span class="icon icon-play" aria-hidden="true"></span><span>设为当前</span></button>
+            <button class="primary-button" type="submit"><span class="icon icon-save" aria-hidden="true"></span><span>保存</span></button>
+          </div>
+        </footer>
+      </form>
+    </section>
+
+    <section id="settingsView" class="view hidden">
+      <header class="subpage-toolbar">
+        <button id="settingsBack" class="back-button" type="button" title="返回" aria-label="返回"><span class="icon icon-arrow-left" aria-hidden="true"></span></button><h1>设置</h1>
+      </header>
+      <div class="settings-shell">
+        <nav id="settingsTabs" class="settings-tabs" aria-label="设置分类">
+          <div class="settings-nav-head"><strong>设置</strong><span>CodexRelay</span></div>
+          <button class="active" type="button" data-tab="general">通用</button><button type="button" data-tab="network">网络</button><button type="button" data-tab="connection">连接</button><button type="button" data-tab="advanced">高级</button><button type="button" data-tab="activity">用量统计</button><button type="button" data-tab="about">关于</button>
+        </nav>
+        <main id="settingsContent" class="settings-content">
+        <div id="generalPanel" class="settings-panel">
+          <div class="panel-heading"><div><span class="panel-kicker">应用行为</span><h2>后台运行</h2><p class="panel-description">控制窗口关闭和 Windows 启动时的运行方式。</p></div></div>
+          <div class="setting-list">
+            <label class="setting-row"><span><strong>关闭到系统托盘</strong><small>点击关闭按钮后保持代理运行</small></span><input id="closeToTray" class="switch-input" type="checkbox"></label>
+            <label class="setting-row"><span><strong>开机启动</strong><small>登录 Windows 后启动 CodexRelay</small></span><input id="launchAtStartup" class="switch-input" type="checkbox"></label>
+            <label class="setting-row"><span><strong>开机启动时隐藏</strong><small>仅由 Windows 开机自启动时直接进入系统托盘</small></span><input id="startHidden" class="switch-input" type="checkbox"></label>
+          </div>
+          <section class="settings-section homepage-settings">
+            <div class="section-heading"><div><h3>主页显示</h3><p>隐藏类别只影响主页展示，不会删除本地配置，也不会停止代理服务。</p></div></div>
+            <div id="visibleCategories" class="setting-list category-visibility-list"></div>
+          </section>
+          <section class="settings-section homepage-settings">
+            <div class="section-heading"><div><h3>默认视图</h3><p>设置主程序启动和恢复窗口时使用的主页筛选条件。</p></div></div>
+            <div class="preference-selects">
+              <label class="field"><span>主程序默认来源</span><select id="defaultSource"><option value="">全部来源</option><option value="doge">二狗子</option><option value="custom">自定义</option></select></label>
+              <label class="field"><span>主程序默认类别</span><select id="defaultCategory"><option value="">全部类别</option><option value="codex">Codex</option><option value="claude">Claude</option><option value="gemini">Gemini</option><option value="grok">Grok</option><option value="opencode">OpenCode</option><option value="openclaw">OpenClaw</option><option value="hermes">Hermes</option><option value="image">生图</option><option value="other">其他</option></select></label>
+              <label class="field"><span>恢复窗口时显示</span><select id="restoreViewMode"><option value="current">当前视图</option><option value="default">默认视图</option></select></label>
+            </div>
+          </section>
+        </div>
+        <div id="networkPanel" class="settings-panel hidden">
+          <div class="panel-heading"><div><span class="panel-kicker">出站连接</span><h2>网络出口</h2><p class="panel-description">选择二狗子同步和代理上游请求使用的网络出口。</p><span id="systemProxyState" class="muted"></span></div></div>
+          <div id="networkModes" class="segmented" role="group" aria-label="网络出口模式">
+            <button type="button" data-mode="system">跟随系统</button><button type="button" data-mode="direct">直接连接</button><button type="button" data-mode="manual">指定代理</button>
+          </div>
+          <div id="manualProxyRow" class="manual-proxy hidden"><input id="manualProxy" type="url" placeholder="http://127.0.0.1:7890"><button id="saveNetwork" class="primary-button" type="button"><span data-button-label>保存</span></button></div>
+          <p id="networkNote" class="network-note"></p>
+          <div class="network-listener-row">
+            <div><strong>监听端口</strong><span>代理监听端口，默认 8765，保存后立即生效</span></div>
+            <div class="network-port-control"><input id="proxyPort" type="number" min="1" max="65535" step="1" inputmode="numeric" aria-label="监听端口"><button id="saveProxyPort" class="primary-button" type="button"><span data-button-label>保存</span></button></div>
+          </div>
+        </div>
+        <div id="connectionPanel" class="settings-panel hidden">
+          <div class="doge-connection-shell">
+            <header class="doge-connection-hero">
+              <div class="doge-logo-frame"><img src="/logo.png" alt="二狗子 API"></div>
+              <div class="doge-connection-title"><span class="panel-kicker">服务连接</span><h2>二狗子 API</h2><p id="dogeConnectionState" class="doge-connection-state">未绑定</p></div>
+            </header>
+            <section id="dogeUnboundView" class="doge-state-view">
+              <label class="doge-token-field"><span>API 密钥</span><input id="dogeAccessToken" type="text" autocomplete="off" placeholder="填写二狗子 User 权限令牌"></label>
+            </section>
+            <section id="dogeBoundView" class="doge-state-view hidden">
+              <div class="doge-account-grid">
+                <div class="doge-account-item"><span>用户 ID</span><strong id="dogeAccountUserID">-</strong></div>
+                <div class="doge-account-item"><span>昵称</span><strong id="dogeAccountNickname">-</strong></div>
+                <div class="doge-account-item"><span>邮箱</span><strong id="dogeAccountEmail">-</strong></div>
+                <div class="doge-account-item"><span>当前余额</span><strong id="dogeAccountBalance">$0.00</strong></div>
+                <div class="doge-account-item"><span>总用量</span><strong id="dogeAccountUsed">$0.00</strong></div>
+                <div class="doge-account-item"><span>API 请求</span><strong id="dogeAccountRequests">0</strong></div>
+              </div>
+              <p id="dogeAccountState" class="doge-account-state"></p>
+            </section>
+            <button id="dogeConnectionAction" class="primary-button doge-action-button" type="button"><span class="icon icon-check" aria-hidden="true"></span><span data-doge-action-label>验证并绑定</span></button>
+            <div id="dogeSyncRow" class="doge-sync-row hidden"><div><strong>自动同步</strong><span>保持连接状态最新</span></div><select id="dogeSyncInterval" class="sync-select" aria-label="自动同步间隔"><option value="1">每 1 分钟</option><option value="3">每 3 分钟</option><option value="5">每 5 分钟</option><option value="10">每 10 分钟</option><option value="15">每 15 分钟</option><option value="30">每 30 分钟</option><option value="60">每 1 小时</option></select></div>
+            <p id="dogeSyncError" class="doge-sync-error"></p>
+          </div>
+        </div>
+        <div id="advancedPanel" class="settings-panel hidden">
+          <div class="panel-heading"><div><span class="panel-kicker">路径与外部客户端</span><h2>高级配置</h2><p class="panel-description">CodexRelay 配置和统计使用独立数据目录；外部客户端仅保存读取路径，不会迁移外部软件文件。</p></div></div>
+          <div class="relay-data-directory-row">
+            <div class="relay-data-directory-copy"><strong>CodexRelay 配置文件路径</strong><small>切换后会迁移 config.json 和 usage.json，后续启动继续使用新路径。</small></div>
+            <div class="relay-data-directory-control"><input id="dataDirectory" type="text" readonly aria-label="CodexRelay 配置文件路径"><button id="chooseDataDirectory" class="secondary-button compact-button" type="button"><span class="icon icon-edit" aria-hidden="true"></span><span data-button-label>选择路径</span></button></div>
+          </div>
+          <div id="clientConfigRows" class="client-config-rows"></div>
+        </div>
+        <div id="activityPanel" class="settings-panel hidden">
+          <div class="panel-heading usage-panel-heading">
+             <div><h2>用量统计</h2><span id="requestCount" class="muted">0 条请求</span></div>
+            <div class="usage-toolbar">
+              <div id="usageRanges" class="usage-ranges segmented" role="group" aria-label="统计时间范围">
+                <button type="button" data-range="today">今天</button><button type="button" data-range="7d" class="active">7 天</button><button type="button" data-range="30d">30 天</button><button type="button" data-range="all">全部</button>
+              </div>
+               <select id="usageProfile" aria-label="筛选代理 API"><option value="">全部代理 API</option></select>
+              <button id="clearUsage" class="danger-button compact-button" type="button"><span class="icon icon-trash-2" aria-hidden="true"></span><span>清空</span></button>
+            </div>
+          </div>
+          <div class="usage-summary" aria-label="Token 用量汇总">
+            <div><span>总 Token</span><strong id="usageTotal">0</strong></div>
+            <div><span>输入 Token</span><strong id="usageInput">0</strong></div>
+            <div><span>输出 Token</span><strong id="usageOutput">0</strong></div>
+            <div><span>缓存命中</span><strong id="usageCached">0</strong></div>
+            <div><span>请求数</span><strong id="usageRequests">0</strong><small id="usageReported"></small></div>
+          </div>
+          <div class="table-wrap">
+             <table class="usage-table"><thead><tr><th>时间</th><th>代理 API</th><th>模型</th><th>请求</th><th>输入</th><th>输出</th><th>缓存</th><th>总计</th><th>状态</th><th>耗时</th></tr></thead><tbody id="requestRows"></tbody></table>
+            <div id="emptyRequests" class="table-empty">暂无请求</div>
+          </div>
+        </div>
+        <div id="aboutPanel" class="settings-panel hidden">
+          <img class="about-mark" src="/logo.png" alt=""><h2>CodexRelay</h2><p id="aboutVersion" class="muted"></p>
+          <div class="about-meta">
+            <div><span>作者</span><strong>Ricky</strong></div>
+            <div><span>官网</span><a href="https://ergouzi.life/" target="_blank" rel="noreferrer">https://ergouzi.life/</a></div>
+            <div><span>后台</span><a href="https://ergouzi.life/dashboard/overview" target="_blank" rel="noreferrer">https://ergouzi.life/dashboard/overview</a></div>
+          </div>
+        </div>
+        </main>
+      </div>
+    </section>
+  </div>
+  <div id="dogeCategoryModal" class="modal-backdrop hidden" role="presentation">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="dogeCategoryTitle">
+      <header class="modal-heading"><div><span class="panel-kicker">二狗子目录</span><h2 id="dogeCategoryTitle">选择存放分组</h2></div><button id="closeDogeCategoryModal" class="back-button" type="button" title="关闭" aria-label="关闭"><span class="icon icon-x" aria-hidden="true"></span></button></header>
+      <p class="modal-description">为新同步的令牌选择本地代理类别，之后可以从主页启用。</p>
+      <div id="dogeCategoryRows" class="doge-category-rows"></div>
+      <footer class="modal-footer"><button id="saveDogeCategories" class="primary-button" type="button"><span class="icon icon-save" aria-hidden="true"></span><span>保存分组</span></button></footer>
+    </section>
+  </div>
+  <div id="dogeTopupModal" class="modal-backdrop hidden" role="presentation">
+    <section class="modal-panel doge-topup-panel" role="dialog" aria-modal="true" aria-labelledby="dogeTopupTitle">
+      <header class="modal-heading"><div class="doge-topup-heading"><span class="doge-topup-mark"><span class="icon icon-plus" aria-hidden="true"></span></span><div><span class="panel-kicker">二狗子账户</span><h2 id="dogeTopupTitle">兑换额度</h2></div></div><button id="closeDogeTopupModal" class="back-button" type="button" title="关闭" aria-label="关闭"><span class="icon icon-x" aria-hidden="true"></span></button></header>
+      <p class="modal-description">输入兑换码，额度到账后会自动刷新余额与套餐。</p>
+      <label class="field doge-topup-field"><span>兑换码</span><input id="dogeTopupCode" type="text" autocomplete="off" placeholder="输入您的兑换码" maxlength="256"></label>
+      <p id="dogeTopupError" class="doge-topup-error hidden"></p>
+      <footer class="doge-topup-footer"><button id="dogeTopupPurchase" class="doge-purchase-link hidden" type="button">需要兑换码？点击购买 ↗</button><button id="submitDogeTopup" class="primary-button" type="button"><span class="icon icon-check" aria-hidden="true"></span><span data-topup-label>兑换额度</span></button></footer>
+    </section>
+  </div>
+  <div id="onboardingModal" class="modal-backdrop hidden" role="presentation">
+    <section class="modal-panel onboarding-panel" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
+      <header class="onboarding-heading">
+        <img class="onboarding-mark" src="/logo.png" alt="">
+        <div><span class="panel-kicker">首次使用</span><h2 id="onboardingTitle">欢迎使用 CodexRelay</h2><p>绑定二狗子访问令牌后即可开始管理和切换 API。</p></div>
+      </header>
+      <div class="onboarding-guide">
+        <div class="onboarding-guide-head"><strong>完成初始化</strong><span>约 1 分钟</span></div>
+        <ol class="onboarding-steps">
+          <li>打开二狗子用户中心 → <button id="openDogeProfile" class="text-button onboarding-link" type="button">https://ergouzi.life/profile ↗</button></li>
+          <li>进入 <strong>安全 → 访问令牌</strong></li>
+          <li>点击 <strong>重新生成</strong>，复制访问令牌</li>
+        </ol>
+      </div>
+      <label class="field onboarding-token-field"><span>访问令牌</span><input id="onboardingToken" type="text" autocomplete="off" placeholder="粘贴二狗子访问令牌" maxlength="512"></label>
+      <p id="onboardingError" class="onboarding-error hidden"></p>
+      <footer class="onboarding-footer"><button id="skipOnboarding" class="secondary-button" type="button"><span data-button-label>暂时跳过</span></button><button id="bindOnboarding" class="primary-button" type="button"><span class="icon icon-check" aria-hidden="true"></span><span>绑定并开始使用</span></button></footer>
+    </section>
+  </div>
+  <div id="clientSetupModal" class="modal-backdrop hidden" role="presentation">
+    <section class="modal-panel client-setup-panel" role="dialog" aria-modal="true" aria-labelledby="clientSetupHeading">
+      <header class="modal-heading"><div><span class="panel-kicker">提示</span><h2 id="clientSetupHeading">配置外部客户端</h2></div><button id="closeClientSetupModal" class="back-button" type="button" title="关闭" aria-label="关闭"><span class="icon icon-x" aria-hidden="true"></span></button></header>
+      <p id="clientSetupQuestion" class="client-setup-question"></p>
+      <div class="client-setup-values">
+        <div><span>请求地址</span><code id="clientSetupURL">-</code></div>
+        <div><span>本地密钥</span><code id="clientSetupKey">-</code></div>
+      </div>
+      <footer class="modal-footer client-setup-footer"><button id="clientSetupSkip" class="secondary-button" type="button">跳过</button><button id="clientSetupConfigure" class="primary-button" type="button"><span class="icon icon-check" aria-hidden="true"></span><span data-button-label>配置</span></button></footer>
+    </section>
+  </div>
+  <div id="confirmModal" class="modal-backdrop hidden" role="presentation">
+    <section class="modal-panel confirm-panel" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+      <header class="confirm-heading">
+        <div class="confirm-brand"><img src="/logo.png" alt=""><div><span class="panel-kicker">CodexRelay</span><h2 id="confirmTitle">确认操作</h2></div></div>
+      </header>
+      <p id="confirmMessage" class="confirm-message"></p>
+      <footer class="modal-footer confirm-footer"><button id="confirmCancel" class="secondary-button" type="button">取消</button><button id="confirmAccept" class="primary-button" type="button"><span data-confirm-label>确定</span></button></footer>
+    </section>
+  </div>
+  <div id="toast" class="toast" role="status"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<!--
+  @Author        : 顾青离
+  @Url           : sucaijun.com
+  @Email         : Ricky@LiHai.La
+  @Project       : CodexRelay
+  @Description   : 右下角独立提醒窗口结构
+  @File          : 余额、套餐、公告和令牌切换提醒窗口
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CodexRelay 提醒</title>
+  <link rel="stylesheet" href="/notification.css">
+</head>
+<body>
+  <main id="notificationCard" class="notification-card">
+    <header class="notification-heading"><img src="/logo.png" alt=""><div><strong id="notificationTitle">CodexRelay 提醒</strong><span>二狗子账户状态</span></div></header>
+    <div id="notificationContent" class="notification-content">
+      <div id="notificationRows" class="notification-rows"></div>
+      <section id="tokenSwitchPanel" class="token-switch-panel" hidden>
+        <p id="tokenSwitchMessage" class="token-switch-message"></p>
+        <label class="token-switch-label" for="tokenSwitchCandidates">切换到</label>
+        <select id="tokenSwitchCandidates" class="token-switch-select"></select>
+        <p id="tokenSwitchStatus" class="token-switch-status" aria-live="polite"></p>
+      </section>
+    </div>
+    <footer id="notificationActions" class="notification-actions">
+      <div id="tokenSwitchActions" class="token-switch-actions" hidden>
+        <button id="cancelTokenSwitch" class="notification-secondary" type="button"><span data-button-label>取消</span></button>
+        <button id="confirmTokenSwitch" class="notification-dismiss" type="button"><span data-button-label>确定</span></button>
+      </div>
+      <button id="dismissNotification" class="notification-dismiss" type="button" hidden><span data-button-label>我知道了</span></button>
+    </footer>
+  </main>
+  <script type="module" src="/notification.js"></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+/*
+ * @Author        : 顾青离
+ * @Url           : sucaijun.com
+ * @Email         : Ricky@LiHai.La
+ * @Project       : CodexRelay
+ * @Description   : 独立提醒窗口的紧凑视觉样式
+ * @File          : 右下角提醒窗口样式
+ */
+:root { color-scheme: light; font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif; color: #1b2026; }
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; background: transparent; }
+body { padding: 10px; overflow: hidden; }
+.icon { width: 14px; height: 14px; display: inline-block; flex: 0 0 auto; background: currentColor; -webkit-mask: var(--icon-url) center / contain no-repeat; mask: var(--icon-url) center / contain no-repeat; }
+.icon-load { --icon-url: url("/icons/load.svg"); }
+.spin { animation: notification-icon-spin .8s linear infinite; }
+@keyframes notification-icon-spin { to { transform: rotate(360deg); } }
+.notification-card { width: 100%; height: 100%; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding: 16px; border: 1px solid #dfe4e9; border-radius: 12px; background: #fff; box-shadow: 0 14px 34px rgba(28, 42, 55, .2); }
+.notification-heading { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #eef0f2; }
+.notification-heading img { width: 32px; height: 32px; object-fit: contain; border-radius: 8px; }
+.notification-heading div { display: grid; gap: 3px; min-width: 0; }
+.notification-heading strong { font-size: 14px; line-height: 1.2; }
+.notification-heading span { color: #7a838d; font-size: 11px; }
+.notification-content { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable; }
+.notification-rows { display: grid; gap: 8px; max-height: none; overflow: visible; padding: 12px 0 10px; }
+.notification-row { display: grid; gap: 3px; padding-left: 10px; border-left: 3px solid #d8a23b; }
+.notification-row.balance { border-color: #d94747; }
+.notification-row.subscription { border-color: #d08a31; }
+.notification-row.announcement { border-color: #3b8bd8; }
+.notification-row.token-switch { border-color: #2c9b82; }
+.notification-row strong { font-size: 12px; }
+.notification-row span, .notification-row .notification-markdown { color: #5f6872; font-size: 12px; line-height: 1.35; }
+.notification-markdown { overflow-wrap: anywhere; }
+.notification-markdown p { margin: 0 0 5px; }
+.notification-markdown p:last-child { margin-bottom: 0; }
+.notification-markdown h1, .notification-markdown h2, .notification-markdown h3, .notification-markdown h4 { margin: 0 0 5px; color: #35404b; font-size: 12px; line-height: 1.3; }
+.notification-markdown ul, .notification-markdown ol { margin: 3px 0 5px; padding-left: 18px; }
+.notification-markdown blockquote { margin: 4px 0; padding-left: 7px; border-left: 2px solid #c7d4e1; }
+.notification-markdown pre { max-width: 100%; margin: 4px 0; padding: 5px 7px; overflow-x: auto; border-radius: 4px; background: #f1f3f5; font: 11px/1.4 Consolas, monospace; }
+.notification-markdown code { padding: 1px 3px; border-radius: 3px; background: #f1f3f5; font: 11px/1.35 Consolas, monospace; }
+.notification-markdown pre code { padding: 0; background: transparent; }
+.notification-markdown a { color: #287bc1; }
+.notification-card [hidden] { display: none !important; }
+.notification-actions { flex: 0 0 auto; padding-top: 10px; }
+.notification-dismiss { width: 100%; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 12px; border: 0; border-radius: 7px; background: #1687f8; color: #fff; font-size: 12px; }
+.notification-dismiss:hover, .notification-dismiss:focus-visible { background: #0875df; outline: none; }
+.token-switch-panel { display: grid; gap: 8px; padding-top: 12px; }
+.token-switch-message { margin: 0; color: #46515c; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+.token-switch-label { color: #7a838d; font-size: 11px; }
+.token-switch-select { width: 100%; min-height: 34px; padding: 5px 8px; border: 1px solid #d6dce2; border-radius: 7px; background: #fff; color: #252c33; font: inherit; font-size: 12px; }
+.token-switch-select:focus-visible { border-color: #1687f8; outline: 2px solid rgba(22, 135, 248, .18); }
+.token-switch-status { min-height: 16px; margin: 0; color: #c24b4b; font-size: 11px; line-height: 1.35; }
+.token-switch-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.notification-secondary { width: 100%; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 12px; border: 1px solid #d6dce2; border-radius: 7px; background: #fff; color: #4d5964; font-size: 12px; }
+.notification-secondary:hover, .notification-secondary:focus-visible { border-color: #9faab5; background: #f5f7f8; outline: none; }
+button:disabled, select:disabled { cursor: not-allowed; opacity: .55; }

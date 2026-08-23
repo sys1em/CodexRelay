@@ -1,0 +1,19 @@
+{
+  "name": "codexrelay",
+  "version": "1.0.0",
+  "description": "CodexRelay 是使用 Go + Wails v3 开发的 Windows 桌面程序，同时运行一个只监听本机回环地址的透明 API 反向代理。Codex 始终请求固定的本地地址，CodexRelay 将新请求转发给当前选中的上游并替换 API 密钥。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}
