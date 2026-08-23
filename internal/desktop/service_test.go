@@ -13,6 +13,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -279,6 +280,60 @@ func TestDogeTokenSwitchPromptUsesAvailableTokensInCurrentCategoryAndDismissesFo
 	service.switchMu.Unlock()
 	if got := service.GetState().Doge.TokenSwitch; got != nil {
 		t.Fatalf("ongoing failure should stay suppressed after five minutes, got %+v", got)
+	}
+}
+
+func TestSwitchDogeTokenUpdatesCodexClientConfiguration(t *testing.T) {
+	directory := t.TempDir()
+	codexDirectory := filepath.Join(directory, ".codex")
+	store := config.NewStore(filepath.Join(directory, "config.json"))
+	cfg := config.Default(18765)
+	cfg.LocalAccessToken = "sk-local-relay"
+	cfg.ClientConfigs[config.CategoryCodex] = config.ClientConfig{ConfigDir: codexDirectory, ConfigFile: "config.toml"}
+	cfg.Doge.AccessToken = "fake-doge-access-token"
+	cfg.Doge.Groups = []string{"可用分组"}
+	cfg.Doge.Tokens = []config.DogeToken{
+		{ID: 41, Status: 1, Name: "当前令牌", Category: config.CategoryCodex, Key: "sk-current", Group: "可用分组"},
+		{ID: 42, Status: 1, Name: "候选令牌", Category: config.CategoryCodex, Key: "sk-candidate", Group: "可用分组"},
+	}
+	cfg.Profiles = []config.Profile{{
+		ID: "doge-profile", Source: config.SourceDoge, Category: config.CategoryCodex, Name: "当前令牌",
+		BaseURL: "https://example.test/v1", APIKey: "sk-current", RemoteTokenID: 41,
+	}}
+	cfg.ActiveProfiles = map[string]string{config.CategoryCodex: "doge-profile"}
+	if err := store.Save(cfg); err != nil {
+		t.Fatal(err)
+	}
+	runtime := newTestRuntime(t, directory, store, cfg)
+	service := NewDesktopService(runtime)
+	for index := 0; index < 5; index++ {
+		runtime.ObserveUpstreamResult("doge-profile", config.CategoryCodex, 403, false)
+	}
+	prompt := service.GetState().Doge.TokenSwitch
+	if prompt == nil {
+		t.Fatal("expected token switch prompt")
+	}
+	if err := service.SwitchDogeToken(prompt.Key, 42); err != nil {
+		t.Fatal(err)
+	}
+	configText, err := os.ReadFile(filepath.Join(codexDirectory, "config.toml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(configText), `base_url = "http://127.0.0.1:18765/codex"`) {
+		t.Fatalf("Codex config.toml was not updated: %s", configText)
+	}
+	authText, err := os.ReadFile(filepath.Join(codexDirectory, "auth.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(authText), `"OPENAI_API_KEY": "sk-local-relay"`) {
+		t.Fatalf("Codex auth.json was not updated: %s", authText)
+	}
+	activeID := runtime.State().Config.ActiveProfiles[config.CategoryCodex]
+	activeIndex := config.FindProfileIndex(runtime.State().Config.Profiles, activeID)
+	if activeIndex < 0 || runtime.State().Config.Profiles[activeIndex].RemoteTokenID != 42 {
+		t.Fatalf("candidate token was not activated: %q", activeID)
 	}
 }
 
