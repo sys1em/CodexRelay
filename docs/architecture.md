@@ -91,4 +91,4 @@ usage -> storage
 
 `build.ps1` 固定构建 `windows/amd64`，从 `internal/desktop/service.go` 动态读取 `applicationVersion`，输出唯一的 `dist/CodexRelay-<版本>.exe`；脚本从根 `logo.png` 生成 `build/windows/app.ico` 与 `cmd/resource_windows_amd64.syso`，重新生成 `frontend/bindings`，运行 Go 测试、vet 和前端语法检查，最后构建 GUI 子系统 EXE。生成的 EXE 嵌入前端、bindings 和品牌资源，不依赖源码目录。
 
-Windows 发布同时保留 NSIS 安装包和按架构命名的独立 EXE。应用内更新只从官方 GitHub Release 选择 `CodexRelay-<版本>-<架构>.exe`，要求 `SHA256SUMS` 中存在匹配摘要，由 Wails updater 完成下载、校验、当前程序备份、原子替换和重启；它不更新 NSIS 卸载注册信息，macOS 不初始化该更新器。
+Windows 发布同时保留 NSIS 安装包和按架构命名的独立 EXE。应用内更新通过 GitHub 公共发布页的 `/releases/latest` 重定向识别稳定版本，不调用有匿名配额限制的 GitHub API；随后按固定规则下载 `CodexRelay-<版本>-<架构>.exe`，并要求 `SHA256SUMS` 中存在匹配摘要。Wails updater 负责下载、校验、当前程序备份、原子替换和重启；它不更新 NSIS 卸载注册信息，macOS 不初始化该更新器。

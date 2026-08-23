@@ -16,7 +16,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"codexrelay/internal/network"
@@ -24,7 +23,6 @@ import (
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/updater"
-	githubprovider "github.com/wailsapp/wails/v3/pkg/updater/providers/github"
 )
 
 const (
@@ -33,18 +31,14 @@ const (
 )
 
 func configureUpdater(app *application.App, relayRuntime *relay.Runtime) error {
-	provider, err := githubprovider.New(githubprovider.Config{
-		Repository:    updateRepository,
-		ChecksumAsset: updateChecksumAsset,
-		AssetMatcher:  windowsUpdateAssetMatcher,
-		HTTPClient: &http.Client{
+	provider := newGitHubReleaseProvider(
+		updateRepository,
+		updateChecksumAsset,
+		&http.Client{
 			Timeout:   15 * time.Minute,
 			Transport: updateRoundTripper{runtime: relayRuntime},
 		},
-	})
-	if err != nil {
-		return err
-	}
+	)
 	return app.Updater.Init(updater.Config{
 		CurrentVersion: applicationVersion,
 		Providers:      []updater.Provider{provider},
@@ -142,19 +136,4 @@ func validateWindowsUpdate(release *updater.Release) error {
 		return fmt.Errorf("版本 %s 缺少有效的 SHA-256 校验信息，已拒绝更新", release.Version)
 	}
 	return nil
-}
-
-func windowsUpdateAssetMatcher(req updater.CheckRequest, assets []githubprovider.ReleaseAsset) int {
-	arch := strings.ToLower(req.Arch)
-	if arch != "amd64" && arch != "arm64" {
-		return -1
-	}
-	suffix := "-" + arch + ".exe"
-	for index, asset := range assets {
-		name := strings.ToLower(asset.Name)
-		if strings.HasPrefix(name, "codexrelay-") && strings.HasSuffix(name, suffix) && !strings.Contains(name, "-setup") {
-			return index
-		}
-	}
-	return -1
 }
