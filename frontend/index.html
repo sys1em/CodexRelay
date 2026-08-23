@@ -92,7 +92,7 @@
           <label class="field"><span>API 地址</span><input id="baseUrl" type="url" autocomplete="off" placeholder="https://api.example.com/v1" required></label>
           <label class="field">
             <span>API 密钥</span>
-            <input id="apiKey" type="text" autocomplete="off" placeholder="sk-..." required aria-readonly="false">
+            <input id="apiKey" type="password" autocomplete="new-password" placeholder="sk-..." required aria-readonly="false">
           </label>
           <div class="preview-row">
             <div>
@@ -100,7 +100,10 @@
               <code id="previewUrl">请求地址：-</code>
               <code id="previewToken">密钥：-</code>
             </div>
-            <button id="copyPreview" class="text-button" type="button"><span class="icon icon-copy" aria-hidden="true"></span><span>复制</span></button>
+            <div class="preview-actions" role="group" aria-label="复制 Responses 配置">
+              <button id="copyPreviewUrl" class="text-button" type="button"><span class="icon icon-copy" aria-hidden="true"></span><span>复制地址</span></button>
+              <button id="copyPreviewToken" class="text-button" type="button"><span class="icon icon-copy" aria-hidden="true"></span><span>复制密钥</span></button>
+            </div>
           </div>
           <details class="advanced-fields">
             <summary>高级设置</summary>

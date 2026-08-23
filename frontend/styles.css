@@ -292,6 +292,8 @@ input[readonly]:focus { border-color: #d8dbe0; box-shadow: none; }
 }
 .preview-row div { min-width: 0; display: grid; gap: 6px; }
 .preview-row code { overflow: hidden; color: #3e566d; font-family: Consolas, monospace; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.preview-row .preview-actions { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.preview-actions .text-button { white-space: nowrap; }
 .advanced-fields { border-top: 1px solid #eceef0; padding-top: 16px; }
 .advanced-fields summary { margin-bottom: 18px; color: #4c535c; cursor: pointer; font-weight: 600; }
 .model-manager { display: grid; gap: 12px; margin-top: 24px; padding-top: 18px; border-top: 1px solid #eceef0; }
@@ -679,6 +681,8 @@ body.modal-open { overflow: hidden; padding-right: var(--modal-scrollbar-compens
   .profile-row .profile-actions { grid-column: 3; width: 100%; justify-content: flex-start; opacity: 1 !important; pointer-events: auto; }
   .field-row { grid-template-columns: 1fr; }
   .form-body { width: calc(100% - 30px); padding-top: 25px; }
+  .preview-row { grid-template-columns: 1fr; align-items: stretch; }
+  .preview-row .preview-actions { justify-content: flex-start; }
   .form-footer { padding: 10px 15px; }
   .footer-actions { min-width: 0; overflow-x: auto; }
   .primary-button, .secondary-button, .danger-button { white-space: nowrap; }

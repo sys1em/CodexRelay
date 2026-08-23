@@ -1324,7 +1324,7 @@ async function leaveEditor() {
 function updatePreview() {
   const category = $("profileCategory").value || "codex";
   $("previewUrl").textContent = "请求地址：" + (app.state?.proxyUrls?.[category] || app.state?.proxyUrl || "-");
-  $("previewToken").textContent = "密钥：" + (app.state?.localAccessToken || "-");
+  $("previewToken").textContent = "密钥：" + (app.state?.localAccessToken ? "********" : "-");
 }
 
 async function saveProfile(event) {
@@ -1949,7 +1949,11 @@ $('fetchModels').addEventListener("click", (event) => fetchEditorModels(event.cu
 $('addModel').addEventListener("click", addEditorModel);
 $("baseUrl").addEventListener("input", updatePreview);
 $("profileCategory").addEventListener("change", updatePreview);
-$("copyPreview").addEventListener("click", () => copyText($("previewUrl").textContent + "\n" + $("previewToken").textContent));
+$("copyPreviewUrl").addEventListener("click", () => {
+  const category = $("profileCategory").value || "codex";
+  copyText(app.state?.proxyUrls?.[category] || app.state?.proxyUrl || "-");
+});
+$("copyPreviewToken").addEventListener("click", () => copyText(app.state?.localAccessToken || "-"));
 $("activateProfile").addEventListener("click", (event) => activateProfile(app.selectedId, event.currentTarget));
 $("testProfile").addEventListener("click", () => testProfile(app.selectedId, $("testProfile")));
 $("deleteProfile").addEventListener("click", (event) => deleteProfile(app.selectedId, event.currentTarget));
