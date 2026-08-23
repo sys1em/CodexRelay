@@ -47,6 +47,7 @@ h1, h2, p { margin-top: 0; }
 .icon-arrow-left { --icon-url: url("/icons/arrow-left.svg"); }
 .icon-check { --icon-url: url("/icons/check.svg"); }
 .icon-copy { --icon-url: url("/icons/copy.svg"); }
+.icon-download { --icon-url: url("/icons/download.svg"); }
 .icon-edit { --icon-url: url("/icons/edit.svg"); }
 .icon-eye { --icon-url: url("/icons/eye.svg"); }
 .icon-eye-off { --icon-url: url("/icons/eye-off.svg"); }
@@ -580,6 +581,14 @@ td.path { max-width: 410px; overflow: hidden; font-family: Consolas, monospace; 
 #aboutPanel { padding-top: 54px; text-align: center; }
 .about-mark { margin: 0 auto 14px; width: 52px; height: 52px; }
 #aboutPanel h2 { margin-bottom: 6px; }
+.about-update { position: relative; width: min(560px, 100%); min-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: 28px auto 0; padding: 15px 0 18px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: left; }
+.about-update-copy { min-width: 0; display: grid; gap: 4px; }
+.about-update-copy > span { color: var(--muted); font-size: 11px; }
+.about-update-copy > strong { color: #2d343c; font-size: 13px; font-weight: 680; }
+.about-update-copy > small { color: var(--muted); font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.about-update-copy > small.error { color: var(--red); }
+.about-update-progress { position: absolute; right: 0; bottom: -1px; left: 0; height: 3px; overflow: hidden; background: #e9edf1; }
+.about-update-progress span { width: 0; height: 100%; display: block; background: var(--blue); transition: width .18s ease; }
 .about-meta { width: min(470px, 100%); display: grid; gap: 0; margin: 26px auto 0; border-top: 1px solid var(--line); text-align: left; }
 .about-meta > div { min-height: 48px; display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 18px; border-bottom: 1px solid var(--line); }
 .about-meta span { color: var(--muted); font-size: 12px; }
@@ -701,6 +710,8 @@ body.modal-open { overflow: hidden; padding-right: var(--modal-scrollbar-compens
   .usage-summary > div { min-height: 72px; border-bottom: 1px solid var(--line); }
   .usage-summary > div:nth-child(2n) { border-right: 0; }
   .usage-summary > div:last-child { grid-column: 1 / -1; border-bottom: 0; }
+  .about-update { align-items: stretch; flex-direction: column; gap: 12px; }
+  .about-update button { align-self: flex-start; }
   .manual-proxy { grid-template-columns: 1fr; }
   .network-listener-row { align-items: flex-start; flex-direction: column; }
   .network-port-control { width: 100%; }

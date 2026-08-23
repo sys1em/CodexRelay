@@ -6,6 +6,8 @@ require golang.org/x/sys v0.46.0
 
 require github.com/titanous/json5 v1.0.0
 
+require golang.org/x/mod v0.37.0 // indirect
+
 require (
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/coder/websocket v1.8.14 // indirect

@@ -12,6 +12,7 @@ import {
   ActivateProfile,
   BindDoge,
   CheckClientConfig,
+  CheckForUpdate,
   ClearUsage,
   ConfigureClient,
   CompleteOnboarding,
@@ -19,6 +20,7 @@ import {
   EditDogeToken,
   EnableDogeToken,
   GetState,
+  InstallUpdate,
   OpenDogeProfile,
   OpenDogeTopup,
   MarkDogeAnnouncementsRead,
@@ -69,6 +71,19 @@ const app = {
   editorModels: [],
   editorDefaultModel: "",
   confirmResolver: null,
+  updateCheckStarted: false,
+  update: {
+    supported: false,
+    checked: false,
+    checking: false,
+    installing: false,
+    available: false,
+    latestVersion: "",
+    phase: "",
+    written: 0,
+    total: 0,
+    error: "",
+  },
 };
 
 const categoryOptions = ["codex", "claude", "gemini", "grok", "opencode", "openclaw", "hermes", "image", "other"];
@@ -158,6 +173,10 @@ async function loadState() {
     renderOnboarding();
     openDogeCategoryDialog();
     renderDogeSyncToast();
+    if (!app.updateCheckStarted && app.state.updateSupported) {
+      app.updateCheckStarted = true;
+      setTimeout(() => checkForUpdates(false), 0);
+    }
   } catch (error) {
     toast(errorMessage(error), true);
   }
@@ -166,10 +185,116 @@ async function loadState() {
 function renderShell() {
   $("version").textContent = "v" + app.state.version;
   $("aboutVersion").textContent = "版本 " + app.state.version;
+  renderUpdateStatus();
   const visibleCategories = visibleCategorySet();
   const activeCategories = new Set((app.state.profiles || []).filter((profile) => profile.active && visibleCategories.has(profile.category)).map((profile) => profile.category));
   $("activeCount").textContent = `${activeCategories.size}/${visibleCategories.size}`;
   renderDogeQuota();
+}
+
+function renderUpdateStatus() {
+  const section = $("windowsUpdate");
+  const supported = Boolean(app.state?.updateSupported);
+  app.update.supported = supported;
+  section.classList.toggle("hidden", !supported);
+  if (!supported) return;
+
+  const title = $("updateTitle");
+  const status = $("updateStatus");
+  const button = $("updateAction");
+  const buttonIcon = button.querySelector(".icon");
+  const buttonLabel = button.querySelector("[data-button-label]");
+  const progress = $("updateProgress");
+  const total = Number(app.update.total || 0);
+  const written = Number(app.update.written || 0);
+  const percent = total > 0 ? Math.max(0, Math.min(100, Math.round(written / total * 100))) : 0;
+
+  status.classList.toggle("error", Boolean(app.update.error));
+  progress.classList.toggle("hidden", !app.update.installing || total <= 0);
+  progress.setAttribute("aria-valuenow", String(percent));
+  $("updateProgressBar").style.width = percent + "%";
+  button.disabled = app.update.checking || app.update.installing;
+
+  if (app.update.installing) {
+    title.textContent = app.update.phase || "正在准备更新";
+    status.textContent = total > 0 ? `已下载 ${percent}%` : "请保持程序运行";
+    button.className = "primary-button compact-button";
+    buttonIcon.className = "icon icon-load spin";
+    buttonLabel.textContent = "更新中";
+    return;
+  }
+  if (app.update.checking) {
+    title.textContent = "正在检查新版本";
+    status.textContent = "正在连接 GitHub Releases";
+    button.className = "secondary-button compact-button";
+    buttonIcon.className = "icon icon-load spin";
+    buttonLabel.textContent = "检查中";
+    return;
+  }
+  if (app.update.error) {
+    title.textContent = "无法检查更新";
+    status.textContent = app.update.error;
+  } else if (app.update.available) {
+    title.textContent = `发现新版本 v${app.update.latestVersion}`;
+    status.textContent = "下载完成并校验通过后将自动重启";
+  } else if (app.update.checked) {
+    title.textContent = "当前已是最新版本";
+    status.textContent = `当前版本 v${app.state.version}`;
+  } else {
+    title.textContent = "检查 Windows 新版本";
+    status.textContent = "尚未检查";
+  }
+  button.className = app.update.available ? "primary-button compact-button" : "secondary-button compact-button";
+  buttonIcon.className = app.update.available ? "icon icon-download" : "icon icon-refresh";
+  buttonLabel.textContent = app.update.available ? "下载并重启" : "检查更新";
+}
+
+async function checkForUpdates(manual = true) {
+  if (!app.state?.updateSupported || app.update.checking || app.update.installing) return;
+  app.update.checking = true;
+  app.update.error = "";
+  renderUpdateStatus();
+  try {
+    const info = await CheckForUpdate();
+    app.update.checked = true;
+    app.update.available = Boolean(info.available);
+    app.update.latestVersion = info.latestVersion || "";
+    if (app.update.available) toast(`发现新版本 v${app.update.latestVersion}`);
+    else if (manual) toast("当前已是最新版本");
+  } catch (error) {
+    app.update.checked = true;
+    app.update.available = false;
+    app.update.error = errorMessage(error);
+    if (manual) toast(app.update.error, true);
+  } finally {
+    app.update.checking = false;
+    renderUpdateStatus();
+  }
+}
+
+async function runWindowsUpdate() {
+  if (!app.update.available) {
+    await checkForUpdates(true);
+    return;
+  }
+  const confirmed = await showConfirmDialog(`下载并安装 CodexRelay v${app.update.latestVersion}？程序将在更新后自动重启。`, { title: "安装 Windows 更新" });
+  if (!confirmed) return;
+  app.update.installing = true;
+  app.update.phase = "正在下载更新";
+  app.update.written = 0;
+  app.update.total = 0;
+  app.update.error = "";
+  renderUpdateStatus();
+  try {
+    await InstallUpdate();
+    app.update.phase = "更新已校验，正在重启";
+    renderUpdateStatus();
+  } catch (error) {
+    app.update.installing = false;
+    app.update.error = errorMessage(error);
+    toast(app.update.error, true);
+    renderUpdateStatus();
+  }
 }
 
 function formatDogeUSD(value) {
@@ -1927,6 +2052,7 @@ $("refreshDoge").addEventListener("click", async () => {
 document.querySelectorAll(".filter-option").forEach((button) => button.addEventListener("click", () => setFilter(button.closest(".filter-options").dataset.filterGroup, button.dataset.filterValue)));
 $("openSettings").addEventListener("click", () => openSettings());
 $("settingsBack").addEventListener("click", () => showView("profiles"));
+$("updateAction").addEventListener("click", () => app.update.available ? runWindowsUpdate() : checkForUpdates(true));
 $("chooseDataDirectory").addEventListener("click", async (event) => {
   const button = event.currentTarget;
   try {
@@ -2037,6 +2163,29 @@ document.addEventListener("visibilitychange", () => {
 wails.Events.On("relay-state-changed", () => { if (app.view !== "editor") loadState(); });
 wails.Events.On("relay-restore-default-view", () => {
   if (app.state) restoreDefaultViewFilter();
+});
+wails.Events.On("wails:updater:download-started", () => {
+  app.update.installing = true;
+  app.update.phase = "正在下载更新";
+  renderUpdateStatus();
+});
+wails.Events.On("wails:updater:download-progress", (event) => {
+  const progress = event?.data || event || {};
+  app.update.written = Number(progress.written || 0);
+  app.update.total = Number(progress.total || 0);
+  renderUpdateStatus();
+});
+wails.Events.On("wails:updater:verifying", () => {
+  app.update.phase = "正在校验更新文件";
+  renderUpdateStatus();
+});
+wails.Events.On("wails:updater:installing", () => {
+  app.update.phase = "正在准备替换程序";
+  renderUpdateStatus();
+});
+wails.Events.On("wails:updater:update-ready", () => {
+  app.update.phase = "更新已校验，正在重启";
+  renderUpdateStatus();
 });
 
 loadState();

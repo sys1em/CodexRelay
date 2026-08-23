@@ -24,5 +24,6 @@ export {
     PublicDogeTokenSwitchPrompt,
     PublicModel,
     PublicProfile,
-    TestResult
+    TestResult,
+    UpdateInfo
 } from "./models.js";

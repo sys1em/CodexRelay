@@ -23,6 +23,7 @@ import (
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
+	"github.com/wailsapp/wails/v3/pkg/updater"
 )
 
 var singleInstanceKey = [32]byte{
@@ -114,6 +115,9 @@ func Run(options LaunchOptions) error {
 			},
 		},
 	})
+	if err := configureUpdater(wailsApp, runtime); err != nil {
+		return fmt.Errorf("初始化 Windows 更新服务失败: %w", err)
+	}
 
 	window = wailsApp.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:            "CodexRelay",
@@ -141,6 +145,11 @@ func Run(options LaunchOptions) error {
 	window.OnWindowEvent(events.Common.WindowMinimise, func(_ *application.WindowEvent) { emitDefaultView() })
 	window.OnWindowEvent(events.Common.WindowUnMinimise, func(_ *application.WindowEvent) { emitDefaultView() })
 	window.RegisterHook(events.Common.WindowClosing, func(event *application.WindowEvent) {
+		// updater.Restart 已经把新文件校验并交给 helper；此时必须真正退出，
+		// 否则“关闭到托盘”会拦截 app.Quit，helper 无法完成替换。
+		if wailsApp.Updater != nil && wailsApp.Updater.State() == updater.StateReady {
+			return
+		}
 		state := runtime.State()
 		if state != nil && state.Config.Preferences.CloseToTray {
 			window.Hide()

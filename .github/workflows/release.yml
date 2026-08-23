@@ -52,11 +52,12 @@ jobs:
             -Version $env:RELEASE_VERSION `
             -SkipChecks:$skipChecks
 
-      - name: Upload Windows installer
+      - name: Upload Windows packages
         uses: actions/upload-artifact@v4
         with:
           name: windows-${{ matrix.arch }}
           path: |
+            dist/CodexRelay-*-${{ matrix.arch }}.exe
             dist/CodexRelay-*-setup.exe
           if-no-files-found: error
 
@@ -110,6 +111,13 @@ jobs:
         with:
           path: release-assets
           merge-multiple: true
+
+      - name: Generate Windows checksums
+        run: |
+          find release-assets -maxdepth 1 -type f -name 'CodexRelay-*.exe' -print0 \
+            | sort -z \
+            | xargs -0 sha256sum \
+            | sed 's#  release-assets/#  #' > release-assets/SHA256SUMS
 
       - name: Publish release
         env:

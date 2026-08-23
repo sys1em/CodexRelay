@@ -32,6 +32,13 @@ export class DesktopState {
              */
             this["version"] = "";
         }
+        if (!("updateSupported" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["updateSupported"] = false;
+        }
         if (!("needsOnboarding" in $$source)) {
             /**
              * @member
@@ -154,46 +161,46 @@ export class DesktopState {
      * @returns {DesktopState}
      */
     static createFrom($$source = {}) {
-        const $$createField5_0 = $$createType0;
-        const $$createField7_0 = $$createType0;
-        const $$createField8_0 = $$createType2;
-        const $$createField9_0 = $$createType4;
-        const $$createField10_0 = $$createType5;
-        const $$createField11_0 = $$createType6;
-        const $$createField12_0 = $$createType8;
-        const $$createField13_0 = $$createType9;
-        const $$createField15_0 = $$createType10;
-        const $$createField16_0 = $$createType11;
+        const $$createField6_0 = $$createType0;
+        const $$createField8_0 = $$createType0;
+        const $$createField9_0 = $$createType2;
+        const $$createField10_0 = $$createType4;
+        const $$createField11_0 = $$createType5;
+        const $$createField12_0 = $$createType6;
+        const $$createField13_0 = $$createType8;
+        const $$createField14_0 = $$createType9;
+        const $$createField16_0 = $$createType10;
+        const $$createField17_0 = $$createType11;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("proxyUrls" in $$parsedSource) {
-            $$parsedSource["proxyUrls"] = $$createField5_0($$parsedSource["proxyUrls"]);
+            $$parsedSource["proxyUrls"] = $$createField6_0($$parsedSource["proxyUrls"]);
         }
         if ("activeProfiles" in $$parsedSource) {
-            $$parsedSource["activeProfiles"] = $$createField7_0($$parsedSource["activeProfiles"]);
+            $$parsedSource["activeProfiles"] = $$createField8_0($$parsedSource["activeProfiles"]);
         }
         if ("profiles" in $$parsedSource) {
-            $$parsedSource["profiles"] = $$createField8_0($$parsedSource["profiles"]);
+            $$parsedSource["profiles"] = $$createField9_0($$parsedSource["profiles"]);
         }
         if ("clientConfigs" in $$parsedSource) {
-            $$parsedSource["clientConfigs"] = $$createField9_0($$parsedSource["clientConfigs"]);
+            $$parsedSource["clientConfigs"] = $$createField10_0($$parsedSource["clientConfigs"]);
         }
         if ("network" in $$parsedSource) {
-            $$parsedSource["network"] = $$createField10_0($$parsedSource["network"]);
+            $$parsedSource["network"] = $$createField11_0($$parsedSource["network"]);
         }
         if ("systemProxy" in $$parsedSource) {
-            $$parsedSource["systemProxy"] = $$createField11_0($$parsedSource["systemProxy"]);
+            $$parsedSource["systemProxy"] = $$createField12_0($$parsedSource["systemProxy"]);
         }
         if ("requests" in $$parsedSource) {
-            $$parsedSource["requests"] = $$createField12_0($$parsedSource["requests"]);
+            $$parsedSource["requests"] = $$createField13_0($$parsedSource["requests"]);
         }
         if ("usage" in $$parsedSource) {
-            $$parsedSource["usage"] = $$createField13_0($$parsedSource["usage"]);
+            $$parsedSource["usage"] = $$createField14_0($$parsedSource["usage"]);
         }
         if ("preferences" in $$parsedSource) {
-            $$parsedSource["preferences"] = $$createField15_0($$parsedSource["preferences"]);
+            $$parsedSource["preferences"] = $$createField16_0($$parsedSource["preferences"]);
         }
         if ("doge" in $$parsedSource) {
-            $$parsedSource["doge"] = $$createField16_0($$parsedSource["doge"]);
+            $$parsedSource["doge"] = $$createField17_0($$parsedSource["doge"]);
         }
         return new DesktopState(/** @type {Partial<DesktopState>} */($$parsedSource));
     }
@@ -1530,6 +1537,76 @@ export class TestResult {
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new TestResult(/** @type {Partial<TestResult>} */($$parsedSource));
+    }
+}
+
+export class UpdateInfo {
+    /**
+     * Creates a new UpdateInfo instance.
+     * @param {Partial<UpdateInfo>} [$$source = {}] - The source object to create the UpdateInfo.
+     */
+    constructor($$source = {}) {
+        if (!("supported" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["supported"] = false;
+        }
+        if (!("available" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["available"] = false;
+        }
+        if (!("currentVersion" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["currentVersion"] = "";
+        }
+        if (/** @type {any} */(false)) {
+            /**
+             * @member
+             * @type {string | undefined}
+             */
+            this["latestVersion"] = undefined;
+        }
+        if (/** @type {any} */(false)) {
+            /**
+             * @member
+             * @type {string | undefined}
+             */
+            this["name"] = undefined;
+        }
+        if (/** @type {any} */(false)) {
+            /**
+             * @member
+             * @type {string | undefined}
+             */
+            this["publishedAt"] = undefined;
+        }
+        if (/** @type {any} */(false)) {
+            /**
+             * @member
+             * @type {number | undefined}
+             */
+            this["size"] = undefined;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new UpdateInfo instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {UpdateInfo}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new UpdateInfo(/** @type {Partial<UpdateInfo>} */($$parsedSource));
     }
 }
 

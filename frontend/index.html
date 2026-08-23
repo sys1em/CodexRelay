@@ -231,6 +231,11 @@
         </div>
         <div id="aboutPanel" class="settings-panel hidden">
           <img class="about-mark" src="/logo.png" alt=""><h2>CodexRelay</h2><p id="aboutVersion" class="muted"></p>
+          <section id="windowsUpdate" class="about-update hidden" aria-labelledby="updateTitle">
+            <div class="about-update-copy"><span>Windows 更新</span><strong id="updateTitle">检查 Windows 新版本</strong><small id="updateStatus" aria-live="polite">尚未检查</small></div>
+            <button id="updateAction" class="secondary-button compact-button" type="button"><span class="icon icon-refresh" aria-hidden="true"></span><span data-button-label>检查更新</span></button>
+            <div id="updateProgress" class="about-update-progress hidden" role="progressbar" aria-label="更新下载进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="updateProgressBar"></span></div>
+          </section>
           <div class="about-meta">
             <div><span>作者</span><strong>Ricky</strong></div>
             <div><span>官网</span><a href="https://ergouzi.life/" target="_blank" rel="noreferrer">https://ergouzi.life/</a></div>

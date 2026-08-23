@@ -48,6 +48,16 @@ export function CheckClientConfig(category) {
 }
 
 /**
+ * CheckForUpdate 查询官方仓库最新稳定版本。后台检查只返回状态，不下载或替换程序。
+ * @returns {$CancellablePromise<$models.UpdateInfo>}
+ */
+export function CheckForUpdate() {
+    return $Call.ByID(3131002871).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
+    }));
+}
+
+/**
  * @returns {$CancellablePromise<void>}
  */
 export function ClearUsage() {
@@ -125,7 +135,7 @@ export function EnableDogeToken(id) {
  */
 export function FetchProfileModels(input) {
     return $Call.ByID(1085814066, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
+        return $$createType3($result);
     }));
 }
 
@@ -134,8 +144,16 @@ export function FetchProfileModels(input) {
  */
 export function GetState() {
     return $Call.ByID(3062805628).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType4($result);
     }));
+}
+
+/**
+ * InstallUpdate 重新确认最新版本后下载并校验 EXE，再交给 Wails helper 原子替换并重启。
+ * @returns {$CancellablePromise<void>}
+ */
+export function InstallUpdate() {
+    return $Call.ByID(3330051357);
 }
 
 /**
@@ -316,7 +334,7 @@ export function SyncDogeAnnouncements() {
  */
 export function TestProfile(id) {
     return $Call.ByID(2130459618, id).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType4($result);
+        return $$createType5($result);
     }));
 }
 
@@ -329,7 +347,8 @@ export function UnbindDoge() {
 
 // Private type creation functions
 const $$createType0 = clientconfig$0.PublicClientConfig.createFrom;
-const $$createType1 = $models.PublicModel.createFrom;
-const $$createType2 = $Create.Array($$createType1);
-const $$createType3 = $models.DesktopState.createFrom;
-const $$createType4 = $models.TestResult.createFrom;
+const $$createType1 = $models.UpdateInfo.createFrom;
+const $$createType2 = $models.PublicModel.createFrom;
+const $$createType3 = $Create.Array($$createType2);
+const $$createType4 = $models.DesktopState.createFrom;
+const $$createType5 = $models.TestResult.createFrom;

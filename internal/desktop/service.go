@@ -47,6 +47,7 @@ const (
 
 type DesktopState struct {
 	Version          string                  `json:"version"`
+	UpdateSupported  bool                    `json:"updateSupported"`
 	NeedsOnboarding  bool                    `json:"needsOnboarding"`
 	DataDirectory    string                  `json:"dataDirectory"`
 	ProxyPort        int                     `json:"proxyPort"`
@@ -262,6 +263,7 @@ type DesktopService struct {
 	stateChanged        []func()
 	needsOnboarding     bool
 	dogeMu              sync.Mutex
+	updateMu            sync.Mutex
 	dogeSyncing         bool
 	dogeSyncPhase       string
 	announcementSyncing bool
@@ -521,7 +523,7 @@ func (s *DesktopService) GetState() DesktopState {
 		dogeState.LastSyncAt = state.Config.Doge.LastSyncAt.Format(time.RFC3339)
 	}
 	return DesktopState{
-		Version: applicationVersion, NeedsOnboarding: s.onboardingStatus(), DataDirectory: s.runtime.DataDirectory(), ProxyPort: state.Config.ProxyPort,
+		Version: applicationVersion, UpdateSupported: updatesSupported(), NeedsOnboarding: s.onboardingStatus(), DataDirectory: s.runtime.DataDirectory(), ProxyPort: state.Config.ProxyPort,
 		ProxyURL: proxyURLs[config.CategoryCodex], ProxyURLs: proxyURLs,
 		LocalAccessToken: state.Config.LocalAccessToken, ActiveProfiles: state.Config.ActiveProfiles,
 		Profiles: profiles, ClientConfigs: publicClientConfigs(state.Config), Network: state.Config.Network, SystemProxy: state.SystemProxy,

@@ -78,13 +78,18 @@ node --check frontend\api.js
 
 构建脚本从 `internal\desktop\service.go` 的 `applicationVersion` 动态读取版本号，`dist` 只保留一个带版本号的 EXE。
 
+Windows 版本启动后会检查官方 GitHub Release。发现新版本时，用户可以在“设置 > 关于”确认下载；程序只接受当前架构对应的独立 EXE，并使用 Release 中的 `SHA256SUMS` 校验后原子替换当前程序、自动重启。应用内更新替换程序本体，不重写 NSIS 卸载注册信息；macOS 当前不启用应用内更新。
+
 ## GitHub 发布
 
-推送 `v` 开头的版本标签后，GitHub Actions 会自动构建并发布四个安装包。文件名中的
+推送 `v` 开头的版本标签后，GitHub Actions 会自动构建并发布四个安装包、两个 Windows 应用内更新 EXE 和 `SHA256SUMS`。文件名中的
 `x64` 和 `arm64` 都是 64 位架构，当前不提供 32 位 `x86` 包：
 
 - Windows Intel/AMD：`CodexRelay-<版本>-windows-x64-setup.exe`
 - Windows ARM：`CodexRelay-<版本>-windows-arm64-setup.exe`
+- Windows 应用内更新（Intel/AMD）：`CodexRelay-<版本>-amd64.exe`
+- Windows 应用内更新（ARM）：`CodexRelay-<版本>-arm64.exe`
+- Windows 更新校验：`SHA256SUMS`
 - macOS Intel：`CodexRelay-<版本>-macos-x64.dmg`
 - macOS Apple 芯片（M1/M2/M3/M4）：`CodexRelay-<版本>-macos-arm64.dmg`
 
