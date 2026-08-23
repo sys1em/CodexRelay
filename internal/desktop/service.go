@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"codexrelay/internal/config"
+	"codexrelay/internal/desktop/clientconfig"
 	"codexrelay/internal/network"
 	"codexrelay/internal/platform"
 	"codexrelay/internal/relay"
@@ -1142,6 +1143,16 @@ func (s *DesktopService) SwitchDogeToken(key string, tokenID int64) error {
 	}
 	if !valid {
 		return errors.New("候选令牌当前不可用")
+	}
+	clientEntry := state.Config.ClientConfigs[currentProfile.Category]
+	if clientconfig.Supports(currentProfile.Category) && !clientEntry.SkipConfigReplacement {
+		candidateProfileID := ""
+		if profile, ok := profilesByRemoteID[candidate.ID]; ok {
+			candidateProfileID = profile.ID
+		}
+		if err := clientconfig.Configure(state.Config, currentProfile.Category, candidateProfileID); err != nil {
+			return fmt.Errorf("更新客户端配置失败: %w", err)
+		}
 	}
 	if err := s.EnableDogeToken(candidate.ID); err != nil {
 		return err

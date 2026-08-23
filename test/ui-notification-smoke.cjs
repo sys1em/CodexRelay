@@ -94,10 +94,21 @@ const server = http.createServer((request, response) => {
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(`http://127.0.0.1:${address.port}/`, { waitUntil: "networkidle" });
+    await page.evaluate(() => {
+      globalThis.__copiedText = "";
+      Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text) => { globalThis.__copiedText = text; } } });
+    });
     const toolbar = await page.locator(".toolbar-actions > *").evaluateAll((items) => items.map((item) => item.id || item.className));
     const expected = ["dogeQuotaWrap", "openDogeTopup", "announcementWrap", "refreshDoge", "openSettings", "addProfile"];
     if (toolbar.join() !== expected.join()) throw new Error(`工具栏顺序错误: ${toolbar.join()}`);
     await page.click("#addProfile");
+    if (await page.locator("#apiKey").getAttribute("type") !== "password") throw new Error("编辑页 API 密钥仍以明文输入框显示");
+    if ((await page.locator("#previewToken").textContent()).includes(state.localAccessToken)) throw new Error("编辑页预览仍显示完整本地密钥");
+    if (await page.locator("#copyPreviewUrl").textContent() !== "复制地址" || await page.locator("#copyPreviewToken").textContent() !== "复制密钥") throw new Error("编辑页复制操作未拆分为地址和密钥");
+    await page.click("#copyPreviewUrl");
+    if (await page.evaluate(() => globalThis.__copiedText) !== state.proxyUrls.codex) throw new Error("复制地址内容错误");
+    await page.click("#copyPreviewToken");
+    if (await page.evaluate(() => globalThis.__copiedText) !== state.localAccessToken) throw new Error("复制密钥内容错误");
     await page.fill("#profileName", "未保存确认测试");
     await page.click("#editorBack");
     if (await page.locator("#confirmModal").isHidden() || await page.locator("#confirmModal .confirm-brand .panel-kicker").textContent() !== "CodexRelay" || !(await page.locator("#confirmMessage").textContent()).includes("当前修改尚未保存")) throw new Error("CodexRelay 自定义确认弹窗未显示");
