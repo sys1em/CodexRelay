@@ -18,11 +18,16 @@ case "$ARCH" in
   *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;;
 esac
 
+DISPLAY_ARCH="$ARCH"
+if [[ "$ARCH" == "amd64" ]]; then
+  DISPLAY_ARCH="x64"
+fi
+
 DIST_DIR="$PROJECT_ROOT/dist"
 MACOS_BUILD_DIR="$PROJECT_ROOT/build/macos"
 APP_DIR="$DIST_DIR/CodexRelay.app"
 BINARY="$DIST_DIR/CodexRelay-$VERSION-$ARCH"
-DMG="$DIST_DIR/CodexRelay-$VERSION-$ARCH.dmg"
+DMG="$DIST_DIR/CodexRelay-$VERSION-macos-$DISPLAY_ARCH.dmg"
 ICON="$MACOS_BUILD_DIR/icon.icns"
 
 mkdir -p "$DIST_DIR" "$MACOS_BUILD_DIR"

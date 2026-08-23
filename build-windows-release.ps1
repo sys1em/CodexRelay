@@ -31,7 +31,8 @@ if ($normalizedVersion -notmatch '^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$') {
 $fileVersion = (($normalizedVersion -split '[+-]', 2)[0]) + ".0"
 
 $versionedExecutable = Join-Path $outputDirectory "CodexRelay-$normalizedVersion-$Architecture.exe"
-$installer = Join-Path $outputDirectory "CodexRelay-$normalizedVersion-$Architecture-setup.exe"
+$displayArchitecture = if ($Architecture -eq "amd64") { "x64" } else { $Architecture }
+$installer = Join-Path $outputDirectory "CodexRelay-$normalizedVersion-windows-$displayArchitecture-setup.exe"
 $syso = Join-Path $commandDirectory "resource_windows_$Architecture.syso"
 
 New-Item -ItemType Directory -Force -Path $outputDirectory, $buildDirectory, $iconCacheDirectory, $webviewDirectory | Out-Null

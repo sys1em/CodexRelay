@@ -80,12 +80,16 @@ node --check frontend\api.js
 
 ## GitHub 发布
 
-推送 `v` 开头的版本标签后，GitHub Actions 会自动构建并发布四个安装包：
+推送 `v` 开头的版本标签后，GitHub Actions 会自动构建并发布四个安装包。文件名中的
+`x64` 和 `arm64` 都是 64 位架构，当前不提供 32 位 `x86` 包：
 
-- Windows `amd64`：`CodexRelay-<版本>-amd64-setup.exe`
-- Windows `arm64`：`CodexRelay-<版本>-arm64-setup.exe`
-- macOS `amd64`：`CodexRelay-<版本>-amd64.dmg`
-- macOS `arm64`：`CodexRelay-<版本>-arm64.dmg`
+- Windows Intel/AMD：`CodexRelay-<版本>-windows-x64-setup.exe`
+- Windows ARM：`CodexRelay-<版本>-windows-arm64-setup.exe`
+- macOS Intel：`CodexRelay-<版本>-macos-x64.dmg`
+- macOS Apple 芯片（M1/M2/M3/M4）：`CodexRelay-<版本>-macos-arm64.dmg`
+
+选择方法：Windows 在“设置 > 系统 > 系统信息”的“系统类型”查看；macOS 在“关于本机”中，
+显示 Intel 处理器时选 `x64`，显示 Apple 芯片时选 `arm64`。
 
 ```bash
 git tag v1.0.0
