@@ -36,7 +36,7 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-var applicationVersion = "2.0.0"
+var applicationVersion = "2.1.1"
 
 const (
 	NotificationKindBalance      = "balance"
@@ -723,7 +723,7 @@ func (s *DesktopService) enqueueTokenRequestFailureNotifications() {
 	}
 }
 
-// handleUpstreamResult 在当前活动令牌真正成功后结束该类别的故障轮次。
+// handleUpstreamResult 在当前活动令牌真正成功后结束该类别的故障轮次，并刷新已显示的手动故障提示。
 // 自动切换成功后的通知继续保留到用户确认；这里只清理尝试集合，使后续新故障可以开始新一轮。
 func (s *DesktopService) handleUpstreamResult(profileID, category string, status int, transportError bool) {
 	if transportError || status >= 400 || profileID == "" || category == "" {
@@ -734,17 +734,20 @@ func (s *DesktopService) handleUpstreamResult(profileID, category string, status
 		return
 	}
 	s.switchMu.Lock()
-	_, cleared := s.switchRounds[category]
-	if cleared {
-		delete(s.switchRounds, category)
-		for key := range s.switchPrompts {
-			if strings.HasPrefix(key, profileID+"|") {
-				delete(s.switchPrompts, key)
-			}
+	_, clearedRound := s.switchRounds[category]
+	clearedPrompt := false
+	for key := range s.switchPrompts {
+		if strings.HasPrefix(key, profileID+"|") {
+			delete(s.switchPrompts, key)
+			clearedPrompt = true
 		}
 	}
+	if clearedRound {
+		delete(s.switchRounds, category)
+	}
 	s.switchMu.Unlock()
-	if cleared {
+	// 手动模式没有 switchRounds；仍须在成功响应清掉已显示的故障提示并刷新独立窗口。
+	if clearedRound || clearedPrompt {
 		s.notifyStateChanged()
 	}
 }
@@ -929,11 +932,9 @@ func promptFailureWindow(prompt *PublicDogeTokenSwitchPrompt) int {
 func (s *DesktopService) clearSwitchPrompt(key string) {
 	s.switchMu.Lock()
 	delete(s.switchPrompts, key)
-	for category, context := range s.directorySwitches {
-		if context != nil && context.key == key {
-			delete(s.directorySwitches, category)
-		}
-	}
+	// 目录失效快照不能在切换成功后立即删除：下一次同步需要用它对比旧状态，
+	// 才能在令牌状态或分组恢复时生成独立提醒。setDogeDirectorySwitchContexts
+	// 会在下一次同步中按最新目录替换或清理该快照。
 	for category, notice := range s.directoryRecoveryNotices {
 		if notice != nil && notice.Key == key {
 			delete(s.directoryRecoveryNotices, category)
@@ -1250,12 +1251,20 @@ func buildDogeDirectoryRecoveryNotice(cfg config.AppConfig, previous *tokenSwitc
 	if previous == nil {
 		return nil
 	}
-	current := dogeTokenForProfile(cfg, previous.profile)
-	currentName := strings.TrimSpace(previous.profile.Name)
+	// 令牌失效期间自动切换可能已经改写 ActiveProfiles；恢复提示必须以此刻实际活动项作为
+	// 当前 Profile，恢复的令牌才会进入候选列表，SwitchToken 的并发状态校验也才能成立。
+	currentProfile := previous.profile
+	if activeID := strings.TrimSpace(cfg.ActiveProfiles[previous.profile.Category]); activeID != "" {
+		if index := config.FindProfileIndex(cfg.Profiles, activeID); index >= 0 && cfg.Profiles[index].Category == previous.profile.Category {
+			currentProfile = cfg.Profiles[index]
+		}
+	}
+	current := dogeTokenForProfile(cfg, currentProfile)
+	currentName := strings.TrimSpace(currentProfile.Name)
 	if currentName == "" {
 		currentName = current.Name
 	}
-	currentName = formatNonHomeProfileName(currentName, previous.profile.Source, dogeTokenDisplayGroup(current), current.GroupRatio)
+	currentName = formatNonHomeProfileName(currentName, currentProfile.Source, dogeTokenDisplayGroup(current), current.GroupRatio)
 	if currentName == "" {
 		currentName = "当前令牌"
 	}
@@ -1276,9 +1285,9 @@ func buildDogeDirectoryRecoveryNotice(cfg config.AppConfig, previous *tokenSwitc
 	message := fmt.Sprintf("Codex类别（%s）下%s令牌已恢复可用。", categoryDisplayName(previous.profile.Category), strings.Join(names, "、"))
 	return &PublicDogeTokenSwitchPrompt{
 		Key: previous.key + "|recovered", Category: previous.profile.Category, Mode: "manual", FailureKind: "directory_recovered",
-		CurrentTokenID: previous.profile.RemoteTokenID, CurrentProfileID: previous.profile.ID, CurrentName: currentName,
+		CurrentTokenID: currentProfile.RemoteTokenID, CurrentProfileID: currentProfile.ID, CurrentName: currentName,
 		CurrentGroup: dogeTokenDisplayGroup(current), CurrentRatio: current.GroupRatio, Message: message,
-		Candidates: publicDogeTokenSwitchCandidates(cfg, candidates, previous.profile.ID),
+		Candidates: publicDogeTokenSwitchCandidates(cfg, candidates, currentProfile.ID),
 	}
 }
 
@@ -1342,7 +1351,9 @@ func (s *DesktopService) setDogeDirectorySwitchContexts(contexts map[string]*tok
 			if previous == nil || previous.directoryReason != dogeDirectoryFailureUnavailable || contexts[category] != nil {
 				continue
 			}
-			if state.Config.ActiveProfiles[category] != previous.profile.ID || config.FindProfileIndex(state.Config.Profiles, previous.profile.ID) < 0 {
+			activeID := strings.TrimSpace(state.Config.ActiveProfiles[category])
+			activeIndex := config.FindProfileIndex(state.Config.Profiles, activeID)
+			if activeID == "" || activeIndex < 0 || state.Config.Profiles[activeIndex].Category != category || config.FindProfileIndex(state.Config.Profiles, previous.profile.ID) < 0 {
 				continue
 			}
 			recoveredTokens := recoveredDogeTokens(previous, state.Config)

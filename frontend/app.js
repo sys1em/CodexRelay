@@ -639,8 +639,8 @@ function openDogeTopupModal() {
     toast("请先在设置中绑定二狗子 API", true);
     return;
   }
-  renderDogeTopupState();
   $("dogeTopupError").dataset.submission = "";
+  renderDogeTopupState();
   $("dogeTopupModal").classList.remove("hidden");
   syncModalBody();
   setTimeout(() => $("dogeTopupCode").focus(), 0);
