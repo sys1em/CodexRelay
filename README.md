@@ -1,6 +1,6 @@
 # CodexRelay
 
-CodexRelay 是使用 Go + Wails v3 开发的 Windows 桌面程序，同时运行一个只监听本机回环地址的透明 API 反向代理。Codex 始终请求固定的本地地址，CodexRelay 将新请求转发给当前选中的上游并替换 API 密钥。
+CodexRelay 是使用 Go + Wails v3 开发的 Windows 桌面程序，同时运行一个默认只监听本机回环地址的透明 API 反向代理。Codex 始终请求固定的本地地址，CodexRelay 将新请求转发给当前选中的上游并替换 API 密钥。
 
 程序默认不会读取或修改外部客户端配置；用户在高级设置中点击“配置”并确认后，才会按适配器写入对应配置，并为原文件创建 `.CodexRelay` 备份。程序不会修改 Windows 系统代理、路由、DNS、网卡或 VPN 设置。
 
@@ -8,7 +8,7 @@ CodexRelay 是使用 Go + Wails v3 开发的 Windows 桌面程序，同时运行
 
 双击 `dist\CodexRelay-<版本>.exe` 会显示 Wails 原生窗口。程序采用单实例模式，再次双击会恢复并置前已有窗口。
 
-- 本地 API 地址：`http://127.0.0.1:8765/{codex|claude|gemini|grok|opencode|openclaw|hermes|image|other}`
+- 本地 API 地址：默认使用 `http://127.0.0.1:8765/{codex|claude|gemini|grok|opencode|openclaw|hermes|image|other}`；开启“允许 WSL2 访问”后，WSL2 使用 Windows 主机地址和相同路径访问
 - 配置文件：`C:\Users\<当前用户>\.CodexRelay\config.json`
 - 用量统计：`C:\Users\<当前用户>\.CodexRelay\usage.json`
 - 本地访问令牌：首次运行生成，以 `sk-` 开头
@@ -64,6 +64,8 @@ CodexRelay 是使用 Go + Wails v3 开发的 Windows 桌面程序，同时运行
 - `指定代理`：将出站请求交给指定 HTTP 代理，例如 `http://127.0.0.1:7890`。
 
 程序拒绝把上游代理指向自己的监听端口，避免代理循环。
+
+“设置 > 网络 > 允许 WSL2 访问”默认关闭，代理只监听 `127.0.0.1`；开启后监听 `0.0.0.0`，WSL2 可以通过当前网络模式提供的 Windows 主机地址访问。开启会扩大监听范围，所有请求仍必须携带本地访问令牌；Windows 防火墙是否允许该端口由用户自行控制，程序不会自动修改防火墙规则。
 
 ## 转发规则
 

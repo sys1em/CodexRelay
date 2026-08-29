@@ -91,7 +91,7 @@ usage -> storage
 
 ## 启动与窗口
 
-普通进程启动创建可见窗口。主页首次加载使用 `preferences.defaultSource` 与 `preferences.defaultCategory`；恢复策略为 `default` 时，托盘、第二实例和任务栏恢复会重新应用相同筛选，`current` 则保留当前筛选。上述恢复路径不申请二狗子同步。Codex 使用的本地地址为 `http://127.0.0.1:8765/codex`；其他类别分别使用对应的类别前缀。Windows Run 注册表值为：
+普通进程启动创建可见窗口。主页首次加载使用 `preferences.defaultSource` 与 `preferences.defaultCategory`；恢复策略为 `default` 时，托盘、第二实例和任务栏恢复会重新应用相同筛选，`current` 则保留当前筛选。上述恢复路径不申请二狗子同步。代理默认监听 `127.0.0.1`，开启 `config.listenOnAllInterfaces` 后监听 `0.0.0.0`，WSL2 使用 Windows 主机地址访问；Codex 的默认地址为 `http://127.0.0.1:8765/codex`，其他类别分别使用对应的类别前缀。Windows Run 注册表值为：
 
 ```text
 "<绝对路径>\CodexRelay-<版本>.exe" --autostart

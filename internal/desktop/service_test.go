@@ -321,6 +321,53 @@ func TestSetProxyPortUpdatesRuntimeAndPersistsConfig(t *testing.T) {
 	}
 }
 
+func TestSetProxyListenAllInterfacesUpdatesRuntimeAndPersistsConfig(t *testing.T) {
+	directory := t.TempDir()
+	configPath := filepath.Join(directory, "config.json")
+	store := config.NewStore(configPath)
+	cfg := config.Default(18765)
+	if err := store.Save(cfg); err != nil {
+		t.Fatal(err)
+	}
+	runtime := newTestRuntime(t, directory, store, cfg)
+	service := NewDesktopService(runtime)
+	stateChanges := 0
+	service.setStateChangedHandler(func() { stateChanges++ })
+
+	if err := service.SetProxyListenAllInterfaces(true); err != nil {
+		t.Fatal(err)
+	}
+	if !runtime.State().Config.ListenOnAllInterfaces || !service.GetState().ListenOnAllInterfaces {
+		t.Fatalf("WSL2 listener setting should be enabled: config=%v state=%v", runtime.State().Config.ListenOnAllInterfaces, service.GetState().ListenOnAllInterfaces)
+	}
+	persisted, err := store.LoadOrCreate(0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !persisted.ListenOnAllInterfaces {
+		t.Fatal("WSL2 listener setting was not persisted")
+	}
+	if stateChanges == 0 {
+		t.Fatal("listener setting should notify state changes")
+	}
+
+	if err := service.SetProxyListenAllInterfaces(false); err != nil {
+		t.Fatal(err)
+	}
+	if runtime.State().Config.ListenOnAllInterfaces {
+		t.Fatal("listener setting should return to loopback")
+	}
+}
+
+func TestProxyListenAddress(t *testing.T) {
+	if got := proxyListenAddress(8765, false); got != "127.0.0.1:8765" {
+		t.Fatalf("loopback listener address = %q", got)
+	}
+	if got := proxyListenAddress(8765, true); got != "0.0.0.0:8765" {
+		t.Fatalf("all-interface listener address = %q", got)
+	}
+}
+
 func TestDogeTokenSwitchPromptUsesAvailableTokensInCurrentCategoryAndDismissesForFiveMinutes(t *testing.T) {
 	directory := t.TempDir()
 	store := config.NewStore(filepath.Join(directory, "config.json"))
